@@ -122,11 +122,12 @@ export function LoginPage() {
         
         {/* Header */}
         <div style={{ background: '#ffffff', padding: '2rem 2rem 1.25rem 2rem', textAlign: 'center', borderBottom: '1px solid #f1f5f9' }}>
-          <div style={{ width: '48px', height: '48px', margin: '0 auto 10px', background: 'var(--primary)', color: '#ffffff', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', fontWeight: 800 }}>
-            SE
-          </div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)', margin: 0 }}>SS EUROPA</h1>
-          <p style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: '4px 0 0' }}>Official Student Learning Portal</p>
+          <img
+            src="/images/updated-logo.png"
+            alt="SS EUROPA"
+            style={{ height: '54px', width: 'auto', margin: '0 auto 10px', display: 'block', objectFit: 'contain' }}
+          />
+          <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: '0', fontWeight: 600 }}>Official Student Learning Portal</p>
         </div>
 
         <div style={{ padding: '1.75rem 2rem 2rem' }}>

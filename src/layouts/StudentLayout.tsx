@@ -18,11 +18,13 @@ export function StudentLayout() {
       {/* Desktop Sidebar */}
       <aside className="app-sidebar">
         <div className="sidebar-header">
-          <div className="logo-badge">SE</div>
-          <div className="brand-text">
-            <h2>SS EUROPA</h2>
-            <span>Student Portal</span>
-          </div>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+            <img
+              src="/images/updated-logo.png"
+              alt="SS EUROPA"
+              style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
+            />
+          </Link>
         </div>
 
         <nav className="sidebar-nav">
