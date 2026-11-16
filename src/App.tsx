@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { StudentLayout } from './layouts/StudentLayout';
 import { LoginPage } from './pages/LoginPage';
+import { MyClassesPage } from './pages/MyClassesPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CoursesPage } from './pages/CoursesPage';
 import { CoursePlayerPage } from './pages/CoursePlayerPage';
@@ -43,10 +44,15 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* Primary default view matches SS Europa reference mockup */}
+            <Route path="/" element={<MyClassesPage />} />
+            <Route path="/my-classes" element={<MyClassesPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/courses/:id" element={<CoursePlayerPage />} />
+            <Route path="/practice" element={<CoursesPage />} />
+            <Route path="/assignments" element={<ProgressPage />} />
+            <Route path="/translator" element={<AiTutorPage />} />
             <Route path="/live-classes" element={<LiveClassesPage />} />
             <Route path="/classes" element={<LiveClassesPage />} />
             <Route path="/ai-tutor" element={<AiTutorPage />} />
@@ -57,7 +63,7 @@ export const App: React.FC = () => {
           </Route>
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

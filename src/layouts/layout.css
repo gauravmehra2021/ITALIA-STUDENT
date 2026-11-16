@@ -1,17 +1,28 @@
-/* App Shell */
-.app-shell {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--bg);
+/* SS Europa Student Platform Layout */
+:root {
+  --primary-blue: #1E88E5;
+  --primary-blue-hover: #1976D2;
+  --dark-navy: #0B2038;
+  --dark-navy-card: #08192d;
+  --bg-slate: #f4f6f9;
+  --card-white: #ffffff;
+  --green-success: #43A047;
+  --red-accent: #E53935;
+  --gold-accent: #f59e0b;
 }
 
-/* ─── Premium Deep Mediterranean Sidebar ─── */
-.app-sidebar {
-  width: 275px;
-  background:
-    radial-gradient(ellipse 90% 45% at 0% 0%, rgba(59, 163, 208, 0.18), transparent 60%),
-    linear-gradient(180deg, #071725 0%, #0a2236 45%, #0e2d44 100%);
-  color: #e2e8f0;
+.sse-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-slate);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Left Sidebar ─── */
+.sse-sidebar {
+  width: 250px;
+  background: var(--dark-navy);
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -19,335 +30,319 @@
   height: 100vh;
   z-index: 50;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 4px 0 24px rgba(7, 23, 37, 0.2);
+  box-shadow: 4px 0 20px rgba(11, 32, 56, 0.25);
 }
 
-/* ─── Brand Logo Card ─── */
-.sidebar-brand-container {
-  padding: 1.25rem 1rem 0.85rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+.sse-brand-box {
+  padding: 1.5rem 1.25rem 1.25rem 1.25rem;
 }
 
-.sidebar-brand-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.sse-brand-icon {
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  padding: 10px 12px;
-  transition: all 0.2s ease;
-}
-
-.sidebar-brand-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(56, 189, 248, 0.3);
-  transform: translateY(-1px);
-}
-
-.brand-logo-frame {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 6px 10px;
+  background: linear-gradient(135deg, #0284c7 0%, #1E88E5 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
 }
 
-.brand-logo-img {
-  height: 38px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-  display: block;
+.sse-brand-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  letter-spacing: -0.3px;
 }
 
-.brand-meta-badge {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 4px 0 4px;
-}
-
-.brand-tag {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+.sse-brand-sub {
+  font-size: 0.72rem;
   color: #94a3b8;
-}
-
-.brand-live-pulse {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.68rem;
   font-weight: 600;
-  color: #4ade80;
+  letter-spacing: 0.05em;
 }
 
-.pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
-  animation: pulse-ring 2s infinite;
-}
-
-@keyframes pulse-ring {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.8; }
-}
-
-/* ─── Navigation Groups ─── */
-.sidebar-nav-container {
-  padding: 1rem 0.85rem;
+.sse-nav-menu {
+  padding: 0.5rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 4px;
   flex: 1;
   overflow-y: auto;
 }
 
-.sidebar-nav-container::-webkit-scrollbar {
+.sse-nav-menu::-webkit-scrollbar {
   width: 4px;
 }
 
-.sidebar-nav-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+.sse-nav-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 
-.nav-group {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.nav-group-label {
-  font-size: 0.67rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  color: rgba(148, 163, 184, 0.65);
-  padding: 4px 10px 4px 10px;
-  text-transform: uppercase;
-}
-
-.sidebar-item {
+.sse-nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 9px 12px;
+  padding: 11px 16px;
   border-radius: 10px;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(226, 232, 240, 0.78);
+  color: rgba(255, 255, 255, 0.78);
   text-decoration: none;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-}
-
-.item-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  transition: color 0.18s ease;
-}
-
-.item-title {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
-  transform: translateX(2px);
-}
-
-.sidebar-item:hover .item-icon {
-  color: #38bdf8;
-}
-
-.sidebar-item.active {
-  background: linear-gradient(90deg, rgba(13, 92, 117, 0.65) 0%, rgba(0, 119, 182, 0.3) 100%);
-  color: #ffffff;
-  font-weight: 700;
-  border-left: 3px solid #38bdf8;
-  box-shadow: 0 4px 12px rgba(7, 23, 37, 0.3);
-}
-
-.sidebar-item.active .item-icon {
-  color: #38bdf8;
-}
-
-/* Micro badges inside links */
-.badge-live-tag {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  border: 1px solid rgba(34, 197, 94, 0.35);
-}
-
-.badge-ai-tag {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-/* ─── Sidebar Footer / User Profile ─── */
-.sidebar-footer-card {
-  padding: 0.9rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(7, 23, 37, 0.45);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.user-profile-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 8px 10px;
-  border-radius: 10px;
-}
-
-.user-avatar-glow {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0284c7 0%, #0D5C75 100%);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.9rem;
-  box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
-  flex-shrink: 0;
-}
-
-.user-info-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.user-name-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #f1f5f9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-membership-pill {
-  font-size: 0.7rem;
-  color: #fbbf24;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.sidebar-logout-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
   transition: all 0.18s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
 }
 
-.sidebar-logout-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.35);
+.sse-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sse-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.sse-nav-item.active {
+  background: var(--primary-blue);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(30, 136, 229, 0.4);
+}
+
+.sse-nav-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 8px 8px;
+}
+
+.sse-logout-item:hover {
+  background: rgba(229, 57, 53, 0.2);
   color: #fca5a5;
 }
 
-/* ─── Main Content Layout ─── */
-.app-main {
+.sse-mascot-card {
+  padding: 0.85rem 1rem 1.25rem 1rem;
+}
+
+.sse-mascot-img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.sse-mascot-img:hover {
+  transform: translateY(-2px);
+}
+
+/* ─── Main Area ─── */
+.sse-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.app-topbar {
-  background: #ffffff;
-  border-bottom: 1px solid var(--border);
-  padding: 0.85rem 2rem;
+/* ─── Topbar with Panoramic Colosseum Artwork ─── */
+.sse-topbar {
+  background-color: #ffffff;
+  background-image: url('/images/ui/colosseum-panorama.png');
+  background-repeat: no-repeat;
+  background-position: right 20px center;
+  background-size: contain;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.5rem 2.25rem 1.25rem 2.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 40;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
-.topbar-academy-label {
-  font-size: 0.85rem;
-  color: var(--muted);
+.sse-title-row {
+  display: flex;
+  align-items: center;
+}
+
+.sse-header-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.sse-tricolor-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 0 6px 0;
+}
+
+.tri-green {
+  width: 28px;
+  height: 3.5px;
+  background: #008C45;
+  border-radius: 2px;
+}
+
+.tri-white {
+  width: 28px;
+  height: 3.5px;
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.tri-red {
+  width: 28px;
+  height: 3.5px;
+  background: #CD212A;
+  border-radius: 2px;
+}
+
+.sse-header-sub {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0;
   font-weight: 500;
 }
 
-.page-container {
-  padding: 2rem 2rem 4rem 2rem;
-  max-width: 1280px;
+.sse-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+.sse-bell-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #334155;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sse-bell-btn:hover {
+  background: #e2e8f0;
+}
+
+.sse-bell-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--red-accent);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+}
+
+.sse-profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 9999px;
+}
+
+.sse-avatar-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary-blue);
+}
+
+.sse-profile-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sse-name-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.sse-role-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sse-arrow-down {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* ─── Page Container ─── */
+.sse-page-content {
+  padding: 2rem 2.25rem 4rem 2.25rem;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
 
-/* ─── Mobile Bottom Navigation ─── */
-.mobile-bottom-nav {
+/* ─── Mobile Bottom Nav ─── */
+.sse-mobile-nav {
   display: none;
 }
 
-@media (max-width: 768px) {
-  .app-sidebar {
+@media (max-width: 900px) {
+  .sse-sidebar {
     display: none;
   }
 
-  .topbar-academy-label {
-    display: none;
+  .sse-topbar {
+    background-image: none;
+    padding: 1.25rem 1.25rem;
   }
 
-  .page-container {
+  .sse-header-title {
+    font-size: 1.5rem;
+  }
+
+  .sse-page-content {
     padding: 1.25rem 1rem 5.5rem 1rem;
   }
 
-  .mobile-bottom-nav {
+  .sse-mobile-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #071725;
+    background: var(--dark-navy);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 8px 10px;
     justify-content: space-around;
@@ -355,26 +350,19 @@
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
   }
 
-  .mobile-tab {
+  .sse-mob-tab {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    transition: all 0.15s ease;
   }
 
-  .mobile-tab-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mobile-tab.active {
-    color: #38bdf8;
+  .sse-mob-tab.active {
+    color: var(--primary-blue);
     font-weight: 700;
   }
 }
