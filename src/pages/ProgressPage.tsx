@@ -1,228 +1,76 @@
-import React, { useEffect, useState } from 'react';
-import { assignmentsApi } from '../services/api';
-import type { AssignmentSubmission } from '../types';
-import { StateBlock } from '../components/StateBlock';
+import { Link } from 'react-router-dom';
+import { useAsync } from '../hooks/useAsync';
+import { learnApi } from '../services/api';
+import { Empty, ErrorState, Illustration, Loading, ProgressBar, ProgressRing, Stars } from '../components/ui';
+import { Icon } from '../components/Icons';
+import './pages.css';
 
-export const ProgressPage: React.FC = () => {
-  const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ProgressPage() {
+  const { data, error, loading, reload } = useAsync(async () => {
+    const summary = await learnApi.me();
+    const outlines = await Promise.all(summary.myCourses.map((c) => learnApi.course(c.course.id)));
+    return { summary, outlines };
+  });
 
-  useEffect(() => {
-    assignmentsApi
-      .mySubmissions()
-      .then((res) => {
-        if (res && res.length > 0) {
-          setSubmissions(res);
-        }
-      })
-      .catch((err) => {
-        console.warn('Submissions load failed', err);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  if (loading && !data) return <Loading label="Loading your progress…" />;
+  if (error || !data) return <ErrorState message={error ?? 'Could not load your progress.'} onRetry={reload} />;
+
+  const { summary, outlines } = data;
 
   return (
-    <div className="animate-rise" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Header */}
-      <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)' }}>
-          My Learning Progress
-        </h1>
-        <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>
-          Track your Italian language milestones, practice assignments, and certificate qualifications.
-        </p>
-      </div>
-
-      {/* Progress Cards */}
-      <div className="grid-3">
-        <div className="panel" style={{ textAlign: 'center', padding: '1.75rem' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.25rem' }}>
-            38%
-          </div>
-          <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>
-            A1 Mastery Completion
-          </div>
-          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-            8 of 21 lessons completed
-          </p>
-          <div
-            style={{
-              width: '100%',
-              height: '8px',
-              background: '#e2e8f0',
-              borderRadius: '9999px',
-              marginTop: '1rem',
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ width: '38%', height: '100%', background: 'var(--primary)' }} />
-          </div>
-        </div>
-
-        <div className="panel" style={{ textAlign: 'center', padding: '1.75rem' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--azure)', marginBottom: '0.25rem' }}>
-            14 hrs
-          </div>
-          <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>
-            Total Study Time
-          </div>
-          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-            Lectures, audio labs & speaking practice
-          </p>
-          <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#15803d', fontWeight: 600 }}>
-            🔥 5-Day Learning Streak Active!
-          </div>
-        </div>
-
-        <div className="panel" style={{ textAlign: 'center', padding: '1.75rem' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f59e0b', marginBottom: '0.25rem' }}>
-            {submissions.length || 3}
-          </div>
-          <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>
-            Assignments Submitted
-          </div>
-          <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-            Evaluated by native Italian instructors
-          </p>
-          <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
-            ⭐ Average Score: 94 / 100
-          </div>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>My progress</h1>
+          <p>Every lesson you finish brings you closer to speaking Italian with confidence.</p>
         </div>
       </div>
 
-      {/* Submissions & Feedback History */}
-      <div className="panel">
-        <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', marginBottom: '1rem' }}>
-          Instructor Assignment Evaluations
-        </h3>
+      <div className="stat-grid">
+        <div className="stat-tile orange"><span className="stat-icon"><Icon.Flame size={22} /></span><div><strong>{summary.streakDays}</strong><span>Day streak</span></div></div>
+        <div className="stat-tile blue"><span className="stat-icon"><Icon.Bolt size={22} /></span><div><strong>{summary.totalXp}</strong><span>Total XP</span></div></div>
+        <div className="stat-tile green"><span className="stat-icon"><Icon.Star size={22} /></span><div><strong>{summary.starsEarned}</strong><span>Stars</span></div></div>
+        <div className="stat-tile purple"><span className="stat-icon"><Icon.Words size={22} /></span><div><strong>{summary.wordsLearned}</strong><span>Words learned</span></div></div>
+      </div>
 
-        {submissions.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '1.25rem',
-                background: '#ffffff',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text)' }}>
-                  Modulo 1: Presentazione Personale in Italiano
-                </span>
-                <span className="badge badge-success">Grade: 95/100 (A)</span>
-              </div>
-              <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '8px' }}>
-                <em>"Ciao! Mi chiamo Rahul e sono uno studente. Vivo a Roma e imparo l'italiano con piacere."</em>
-              </p>
-              <div
-                style={{
-                  background: 'var(--primary-light)',
-                  padding: '10px 14px',
-                  borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  color: 'var(--primary)',
-                }}
-              >
-                👨‍🏫 <strong>Instructor Feedback:</strong> "Bravissimo! Eccellente uso degli articoli e concordanza di genere. Continua così!" — Prof. Marco Rossi
+      {outlines.length === 0 && (
+        <div className="card">
+          <Empty icon="🌱" title="Your progress will appear here">
+            <Link to="/courses" className="btn btn-primary">Choose a course</Link>
+          </Empty>
+        </div>
+      )}
+
+      {outlines.map((o) => (
+        <section key={o.course.id} className="card card-pad stack">
+          <div className="row-between wrap">
+            <div className="row">
+              <ProgressRing value={o.completionPercent} size={72} />
+              <div>
+                <h2>{o.course.title}</h2>
+                <p className="muted small">{o.completedLessons} of {o.totalLessons} lessons · {o.stars} / {o.maxStars} stars · {o.xpEarned} XP</p>
               </div>
             </div>
-
-            <div
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '1.25rem',
-                background: '#ffffff',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 700, color: 'var(--text)' }}>
-                  Modulo 1: Laboratorio di Pronuncia - Consonanti Doppie
-                </span>
-                <span className="badge badge-success">Grade: 92/100 (A)</span>
-              </div>
-              <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '8px' }}>
-                <em>Audio practice recording submitted (32 seconds).</em>
-              </p>
-              <div
-                style={{
-                  background: 'var(--primary-light)',
-                  padding: '10px 14px',
-                  borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  color: 'var(--primary)',
-                }}
-              >
-                👨‍🏫 <strong>Instructor Feedback:</strong> "Good distinction between 'notte' and 'note'. Keep exaggerating the pause slightly for perfection." — Dr. Elena Moretti
-              </div>
-            </div>
+            <Link to={`/courses/${o.course.id}`} className="btn btn-sm">Open course <Icon.ArrowRight size={16} /></Link>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {submissions.map((sub) => (
-              <div
-                key={sub.id}
-                style={{
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  padding: '1.25rem',
-                  background: '#ffffff',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--text)' }}>
-                    {sub.assignmentTitle || 'Italian Assignment'}
-                  </span>
-                  <span className="badge badge-success">
-                    {sub.marksObtained !== null && sub.marksObtained !== undefined
-                      ? `Grade: ${sub.marksObtained}`
-                      : 'Under Review'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.88rem', color: '#475569', marginBottom: '8px' }}>
-                  {sub.submissionText}
-                </p>
-                {sub.teacherFeedback && (
-                  <div
-                    style={{
-                      background: 'var(--primary-light)',
-                      padding: '10px 14px',
-                      borderRadius: '6px',
-                      fontSize: '0.85rem',
-                      color: 'var(--primary)',
-                    }}
-                  >
-                    👨‍🏫 <strong>Instructor Feedback:</strong> {sub.teacherFeedback}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Official Certificate Qualification Notice */}
-      <div
-        className="panel"
-        style={{
-          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-          borderColor: '#fcd34d',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ fontSize: '3rem' }}>🏆</div>
           <div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#92400e' }}>
-              Official SS Europa Academy Certificate of Completion
-            </h3>
-            <p style={{ fontSize: '0.88rem', color: '#78350f', marginTop: '4px' }}>
-              Complete 80% of course lectures and submit all practical assignments to earn your verified Italian Language Certificate recognized for university and visa preparation.
-            </p>
+            {o.units.map((u) => {
+              const pct = u.lessons.length ? Math.round((u.completedLessons / u.lessons.length) * 100) : 0;
+              return (
+                <div key={u.id} className="unit-progress-row">
+                  <Illustration src={u.imageUrl} size={32} />
+                  <div style={{ minWidth: 0 }}>
+                    <strong className="ellipsis">Unit {u.order} · {u.title}</strong>
+                    <span className="muted small">{u.completedLessons} / {u.lessons.length} lessons</span>
+                  </div>
+                  <ProgressBar value={pct} />
+                  <Stars value={Math.round((u.stars / Math.max(1, u.lessons.length * 3)) * 3)} size={14} />
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </div>
+        </section>
+      ))}
     </div>
   );
-};
-
+}

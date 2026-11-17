@@ -1,27 +1,44 @@
 import type {
   AiResponse,
-  Assignment,
-  AssignmentSubmission,
+  Announcement,
   AuthResponse,
   ClassSession,
-  Course,
-  Material,
+  CourseCard,
+  CourseOutline,
+  LearnerSummary,
+  Lesson,
+  LessonResult,
   NotificationItem,
-  PagedResult,
   User,
 } from '../types';
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:5057';
+export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:5080';
 
 export const TOKEN_STORAGE_KEY = 'sseuropa_student_token';
 export const USER_STORAGE_KEY = 'sseuropa_student_user';
+const DEVICE_KEY = 'sseuropa_student_device';
 
-export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
 }
 
+function safeSet(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable (private mode) — keep the session in memory only */
+  }
+}
+
+export const getStoredToken = () => safeGet(TOKEN_STORAGE_KEY);
+
 export function getStoredUser(): User | null {
-  const raw = localStorage.getItem(USER_STORAGE_KEY);
+  const raw = safeGet(USER_STORAGE_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as User;
@@ -31,145 +48,118 @@ export function getStoredUser(): User | null {
 }
 
 export function setStoredAuth(token: string, user: User) {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  safeSet(TOKEN_STORAGE_KEY, token);
+  safeSet(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
 export function clearStoredAuth() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-  localStorage.removeItem(USER_STORAGE_KEY);
+  safeSet(TOKEN_STORAGE_KEY, null);
+  safeSet(USER_STORAGE_KEY, null);
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  errors?: string[];
+function deviceId(): string {
+  let id = safeGet(DEVICE_KEY);
+  if (!id) {
+    id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `web-${Date.now()}`;
+    safeSet(DEVICE_KEY, id);
+  }
+  return id;
+}
+
+const deviceName = () => `Student web · ${navigator.userAgent.slice(0, 60)}`;
+
+/** Fired when the session expires so the app can return to the login page. */
+export const SESSION_EXPIRED_EVENT = 'sseuropa:session-expired';
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+  }
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getStoredToken();
   const headers = new Headers(options.headers || {});
   headers.set('Accept', 'application/json');
+  if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  if (!(options.body instanceof FormData)) {
-    headers.set('Content-Type', 'application/json');
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  } catch {
+    throw new ApiError('Cannot reach the server. Check your internet connection and try again.', 0);
   }
 
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
-
-  const url = `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
-
-  const res = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  const contentType = res.headers.get('content-type') || '';
-  const isJson = contentType.includes('application/json');
-  const payload = isJson ? await res.json() : await res.text();
+  const isJson = (res.headers.get('content-type') || '').includes('application/json');
+  const payload: unknown = isJson ? await res.json() : await res.text();
 
   if (!res.ok) {
-    if (res.status === 401) {
+    if (res.status === 401 && token) {
       clearStoredAuth();
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
     }
-    const message = (typeof payload === 'object' && payload && 'message' in payload)
-      ? (payload as { message?: string }).message
-      : (typeof payload === 'string' ? payload : 'Request failed');
-    throw new Error(message || `Request failed with status ${res.status}`);
+    const p = payload as { message?: string; title?: string; errors?: Record<string, string[]> } | string;
+    let message = typeof p === 'string' ? p : p?.message || p?.title || '';
+    if (typeof p === 'object' && p?.errors) {
+      const first = Object.values(p.errors).flat()[0];
+      if (first) message = first;
+    }
+    if (!message) message = res.status === 403 ? 'You don\'t have access to this.' : `Something went wrong (${res.status}).`;
+    throw new ApiError(message, res.status);
   }
 
-  if (typeof payload === 'object' && payload && 'success' in payload) {
-    const apiRes = payload as ApiResponse<T>;
-    return apiRes.data;
-  }
-
+  if (payload && typeof payload === 'object' && 'success' in payload) return (payload as unknown as { data: T }).data;
   return payload as T;
 }
 
+const post = <T>(path: string, body?: unknown) =>
+  request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) });
+
+// ── Auth ────────────────────────────────────────────────────────────────────
+
 export const authApi = {
-  login: (email: string, password: string, deviceId = 'student-web-portal', deviceName = 'Web Browser') =>
-    request<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, deviceId, deviceName }),
-    }),
-
-  register: (payload: { email: string; password: string; fullName: string; preferredLanguage?: number }) =>
-    request<User>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  verifyOtp: (pendingUserId: string, otpCode: string, deviceId = 'student-web-portal', deviceName = 'Web Browser') =>
-    request<AuthResponse>('/api/auth/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify({ pendingUserId, otpCode, deviceId, deviceName }),
-    }),
-
-  forgotPassword: (email: string) =>
-    request<{ challengeId: string; expiresAt: string }>('/api/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    }),
-
+  login: (email: string, password: string) =>
+    post<AuthResponse>('/api/auth/login', { email, password, deviceId: deviceId(), deviceName: deviceName() }),
+  register: (payload: { email: string; password: string; firstName: string; lastName: string }) =>
+    post<User>('/api/auth/register', { ...payload, preferredLanguage: 'English' }),
+  verifyOtp: (userId: string, code: string) =>
+    post<AuthResponse>('/api/auth/verify-otp', { userId, code, deviceId: deviceId(), deviceName: deviceName() }),
+  forgotPassword: (email: string) => post<{ challengeId: string; expiresAt: string }>('/api/auth/forgot-password', { email }),
   resetPassword: (payload: { challengeId: string; code: string; newPassword: string }) =>
-    request<void>('/api/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  logout: () =>
-    request<void>('/api/auth/logout', { method: 'POST' }).finally(() => {
-      clearStoredAuth();
-    }),
+    post<void>('/api/auth/reset-password', payload),
+  logout: () => post<void>('/api/auth/logout').finally(clearStoredAuth),
 };
 
-export const coursesApi = {
-  list: (params: { search?: string; page?: number; pageSize?: number } = {}) => {
-    const q = new URLSearchParams();
-    q.set('page', String(params.page ?? 1));
-    q.set('pageSize', String(params.pageSize ?? 50));
-    if (params.search) q.set('search', params.search);
-    return request<PagedResult<Course>>(`/api/courses?${q}`);
-  },
+// ── Learning ────────────────────────────────────────────────────────────────
 
-  get: (id: string) => request<Course>(`/api/courses/${id}`),
-
-  enroll: (id: string) => request<void>(`/api/courses/${id}/enroll`, { method: 'POST' }),
+export const learnApi = {
+  me: () => request<LearnerSummary>('/api/learn/me'),
+  courses: () => request<CourseCard[]>('/api/learn/courses'),
+  course: (id: string) => request<CourseOutline>(`/api/learn/courses/${id}`),
+  enroll: (id: string) => post<CourseOutline>(`/api/learn/courses/${id}/enroll`),
+  lesson: (id: string) => request<Lesson>(`/api/learn/lessons/${id}`),
+  complete: (id: string, scorePercent: number, correctAnswers: number, totalQuestions: number) =>
+    post<LessonResult>(`/api/learn/lessons/${id}/complete`, { scorePercent, correctAnswers, totalQuestions }),
 };
 
-export const materialsApi = {
-  byCourse: (courseId: string) => request<Material[]>(`/api/materials/course/${courseId}`),
-};
+// ── Live classes, notifications, AI ─────────────────────────────────────────
 
 export const classesApi = {
   list: () => request<ClassSession[]>('/api/classes'),
   meeting: (id: string) => request<ClassSession>(`/api/classes/${id}/meeting`),
 };
 
-export const assignmentsApi = {
-  byCourse: (courseId: string) => request<Assignment[]>(`/api/assignments/course/${courseId}`),
-  submit: (assignmentId: string, payload: { submissionText: string; fileAttachmentUrl?: string | null }) =>
-    request<AssignmentSubmission>(`/api/assignments/${assignmentId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-  mySubmissions: () => request<AssignmentSubmission[]>('/api/assignments/my-submissions'),
+export const notificationsApi = {
+  list: () => request<NotificationItem[]>('/api/notifications'),
+  markRead: (id: string) => post<void>(`/api/notifications/${id}/read`),
+};
+
+export const announcementsApi = {
+  list: () => request<Announcement[]>('/api/announcements'),
 };
 
 export const aiApi = {
-  ask: (mode: string, prompt: string, sourceLanguage = 'English', targetLanguage = 'Italian') =>
-    request<AiResponse>('/api/ai/chat', {
-      method: 'POST',
-      body: JSON.stringify({ mode, prompt, sourceLanguage, targetLanguage }),
-    }),
-  history: () => request<AiResponse[]>('/api/ai/history'),
+  ask: (mode: 'tutor' | 'translator' | 'conversation' | 'practice', prompt: string) =>
+    post<AiResponse>('/api/ai', { mode, prompt, sourceLanguage: 'English', targetLanguage: 'Italian' }),
 };
-
-export const notificationsApi = {
-  list: () => request<NotificationItem[]>('/api/notifications/mine'),
-  markRead: (id: string) => request<void>(`/api/notifications/${id}/read`, { method: 'POST' }),
-};
-

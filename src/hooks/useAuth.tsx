@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
+  SESSION_EXPIRED_EVENT,
   authApi,
   clearStoredAuth,
   getStoredToken,
@@ -12,12 +13,10 @@ import type { AuthResponse, User } from '../types';
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  loading: boolean;
-  login: (email: string, pass: string) => Promise<AuthResponse>;
-  register: (payload: { email: string; password: string; fullName: string; preferredLanguage?: number }) => Promise<User>;
-  verifyOtp: (pendingUserId: string, otp: string) => Promise<AuthResponse>;
+  login: (email: string, password: string) => Promise<AuthResponse>;
+  register: (payload: { email: string; password: string; firstName: string; lastName: string }) => Promise<AuthResponse>;
+  verifyOtp: (userId: string, code: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
-  applyAuth: (res: AuthResponse) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,89 +24,49 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(getStoredToken);
   const [user, setUser] = useState<User | null>(getStoredUser);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const savedToken = getStoredToken();
-    const savedUser = getStoredUser();
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(savedUser);
-    }
-  }, []);
-
-  function applyAuth(res: AuthResponse) {
-    if (res.accessToken && res.user) {
+  const apply = useCallback((res: AuthResponse) => {
+    if (res.accessToken && res.user && !res.requiresOtp) {
+      setStoredAuth(res.accessToken, res.user);
       setToken(res.accessToken);
       setUser(res.user);
-      setStoredAuth(res.accessToken, res.user);
     }
-  }
+    return res;
+  }, []);
 
-  async function login(email: string, pass: string) {
-    setLoading(true);
-    try {
-      const res = await authApi.login(email, pass);
-      if (!res.requiresOtp && res.accessToken) {
-        applyAuth(res);
-      }
-      return res;
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    const onExpired = () => {
+      setToken(null);
+      setUser(null);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, []);
 
-  async function register(payload: { email: string; password: string; fullName: string; preferredLanguage?: number }) {
-    setLoading(true);
-    try {
-      return await authApi.register(payload);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const login = useCallback(async (email: string, password: string) => apply(await authApi.login(email.trim(), password)), [apply]);
 
-  async function verifyOtp(pendingUserId: string, otp: string) {
-    setLoading(true);
-    try {
-      const res = await authApi.verifyOtp(pendingUserId, otp);
-      if (res.accessToken) {
-        applyAuth(res);
-      }
-      return res;
-    } finally {
-      setLoading(false);
-    }
-  }
+  const register = useCallback(
+    async (payload: { email: string; password: string; firstName: string; lastName: string }) => {
+      await authApi.register({ ...payload, email: payload.email.trim() });
+      return apply(await authApi.login(payload.email.trim(), payload.password));
+    },
+    [apply],
+  );
 
-  async function logout() {
-    setLoading(true);
+  const verifyOtp = useCallback(async (userId: string, code: string) => apply(await authApi.verifyOtp(userId, code)), [apply]);
+
+  const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } catch {
       clearStoredAuth();
-    } finally {
-      setToken(null);
-      setUser(null);
-      setLoading(false);
     }
-  }
+    setToken(null);
+    setUser(null);
+  }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        login,
-        register,
-        verifyOtp,
-        logout,
-        applyAuth,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = useMemo(() => ({ user, token, login, register, verifyOtp, logout }), [user, token, login, register, verifyOtp, logout]);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
@@ -115,4 +74,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }
-

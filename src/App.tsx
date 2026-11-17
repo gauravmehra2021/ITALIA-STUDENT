@@ -1,72 +1,55 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { StudentLayout } from './layouts/StudentLayout';
 import { LoginPage } from './pages/LoginPage';
-import { MyClassesPage } from './pages/MyClassesPage';
-import { DashboardPage } from './pages/DashboardPage';
+import { HomePage } from './pages/HomePage';
 import { CoursesPage } from './pages/CoursesPage';
-import { CoursePlayerPage } from './pages/CoursePlayerPage';
+import { CoursePage } from './pages/CoursePage';
+import { LessonPage } from './pages/LessonPage';
 import { LiveClassesPage } from './pages/LiveClassesPage';
-import { AiTutorPage } from './pages/AiTutorPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { NotificationsPage } from './pages/NotificationsPage';
-import { StateBlock } from './components/StateBlock';
+import { TutorPage } from './pages/TutorPage';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <StateBlock type="loading" message="Loading your student session..." />;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
+function Protected({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
-};
+}
 
-export const App: React.FC = () => {
+export function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public Authentication Route */}
           <Route path="/login" element={<LoginPage />} />
-
-          {/* Protected Student Portal Routes */}
           <Route
             element={
-              <ProtectedRoute>
+              <Protected>
                 <StudentLayout />
-              </ProtectedRoute>
+              </Protected>
             }
           >
-            {/* Primary default view matches SS Europa reference mockup */}
-            <Route path="/" element={<MyClassesPage />} />
-            <Route path="/my-classes" element={<MyClassesPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/courses" element={<CoursesPage />} />
-            <Route path="/courses/:id" element={<CoursePlayerPage />} />
-            <Route path="/practice" element={<CoursesPage />} />
-            <Route path="/assignments" element={<ProgressPage />} />
-            <Route path="/translator" element={<AiTutorPage />} />
+            <Route path="/courses/:id" element={<CoursePage />} />
+            <Route path="/lesson/:id" element={<LessonPage />} />
             <Route path="/live-classes" element={<LiveClassesPage />} />
-            <Route path="/classes" element={<LiveClassesPage />} />
-            <Route path="/ai-tutor" element={<AiTutorPage />} />
-            <Route path="/ai" element={<AiTutorPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/tutor" element={<TutorPage />} />
+            {/* Old links */}
+            <Route path="/my-classes" element={<Navigate to="/" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
+            <Route path="/classes" element={<Navigate to="/live-classes" replace />} />
+            <Route path="/ai-tutor" element={<Navigate to="/tutor" replace />} />
           </Route>
-
-          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
-};
+}
 
 export default App;
-

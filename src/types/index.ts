@@ -3,14 +3,13 @@ export type UserRole = 'User' | 'Mentor' | 'Admin' | 'SuperAdmin' | 'Staff';
 export interface User {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
   fullName: string;
-  firstName?: string;
-  lastName?: string;
   role: UserRole;
-  accountStatus?: number | string;
+  status: string;
+  preferredLanguage: string;
   emailVerified: boolean;
-  avatarUrl?: string | null;
-  preferredLanguage?: number | string;
 }
 
 export interface AuthResponse {
@@ -24,41 +23,189 @@ export interface AuthResponse {
   isDemonstrationOnly: boolean;
 }
 
+// ── Courses & curriculum ────────────────────────────────────────────────────
+
+export type LessonKind = 'Vocabulary' | 'Dialogue' | 'Grammar' | 'Review' | 'Video' | 'Exam';
+export type BlockType = 'Text' | 'Vocabulary' | 'Dialogue' | 'Video' | 'Audio' | 'Image' | 'Pdf' | 'Tip' | 'Table';
+export type ExerciseType = 'ListenPick' | 'PickTranslation' | 'PickWord' | 'MatchPairs' | 'FillBlank' | 'WordOrder' | 'TrueFalse';
+
 export interface Course {
   id: string;
   title: string;
   description: string;
-  level: number;
-  status: number;
-  capacity: number;
+  level: string;
+  status: string;
   enrolledCount: number;
-  mentorId?: string | null;
   mentorName?: string | null;
-  language: string;
-  price: number;
-  currency: string;
   thumbnailUrl?: string | null;
-  paymentUrl?: string | null;
   durationWeeks: number;
-  createdAtUtc: string;
+  slug?: string | null;
+  shortDescription?: string | null;
+  objectives?: string | null;
+  modulesCount: number;
+  lessonsCount: number;
+  cefrLevel: string;
+  category: string;
 }
 
-export interface Material {
+export interface CourseCard {
+  course: Course;
+  isEnrolled: boolean;
+  completionPercent: number;
+  completedLessons: number;
+  totalLessons: number;
+  nextLessonId?: string | null;
+  nextLessonTitle?: string | null;
+}
+
+export interface LessonSummary {
+  id: string;
+  unitId: string;
+  order: number;
+  title: string;
+  titleIt: string;
+  kind: LessonKind;
+  summary: string;
+  estimatedMinutes: number;
+  xpReward: number;
+  isFreePreview: boolean;
+  vocabularyCount: number;
+  exerciseCount: number;
+  hasVideo: boolean;
+  hasAudio: boolean;
+  hasPdf: boolean;
+  completed?: boolean | null;
+  stars?: number | null;
+  bestScorePercent?: number | null;
+  locked?: boolean | null;
+}
+
+export interface Unit {
   id: string;
   courseId: string;
+  order: number;
   title: string;
-  description?: string;
-  type: number; // 1 = Video, 2 = Audio, 0 = PDF, 3 = Worksheet/Task
-  sortOrder: number;
-  videoUrl?: string | null;
-  audioUrl?: string | null;
+  titleIt: string;
+  description: string;
+  canDo: string[];
+  imageUrl?: string | null;
   pdfUrl?: string | null;
-  contentText?: string | null;
-  practicalTask?: string | null;
-  durationMinutes?: number;
-  chapterTitle?: string | null;
-  chapterNumber?: number;
+  liveClassFocus?: string | null;
+  lessons: LessonSummary[];
+  completedLessons: number;
+  stars: number;
 }
+
+export interface CourseOutline {
+  course: Course;
+  units: Unit[];
+  totalLessons: number;
+  completedLessons: number;
+  completionPercent: number;
+  stars: number;
+  maxStars: number;
+  xpEarned: number;
+  isEnrolled: boolean;
+  nextLessonId?: string | null;
+}
+
+export interface VocabularyItem {
+  id: string;
+  italian: string;
+  english: string;
+  pronunciation?: string | null;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
+  example?: string | null;
+  exampleEnglish?: string | null;
+}
+
+export interface DialogueLine {
+  speaker: string;
+  italian: string;
+  english: string;
+  audioUrl?: string | null;
+}
+
+export interface LessonBlock {
+  id: string;
+  type: BlockType;
+  title?: string | null;
+  body?: string | null;
+  mediaUrl?: string | null;
+  caption?: string | null;
+  items: VocabularyItem[];
+  lines: DialogueLine[];
+  table: string[][];
+}
+
+export interface ExerciseOption {
+  text: string;
+  imageUrl?: string | null;
+}
+
+export interface Exercise {
+  id: string;
+  type: ExerciseType;
+  prompt: string;
+  italian?: string | null;
+  imageUrl?: string | null;
+  options: ExerciseOption[];
+  correctIndex: number;
+  answer?: string | null;
+  pairs: { left: string; right: string }[];
+  explanation?: string | null;
+}
+
+export interface Lesson {
+  id: string;
+  courseId: string;
+  unitId: string;
+  unitTitle: string;
+  order: number;
+  title: string;
+  titleIt: string;
+  kind: LessonKind;
+  summary: string;
+  estimatedMinutes: number;
+  xpReward: number;
+  isFreePreview: boolean;
+  blocks: LessonBlock[];
+  exercises: Exercise[];
+  homework?: string | null;
+  previousLessonId?: string | null;
+  nextLessonId?: string | null;
+  stars?: number | null;
+  bestScorePercent?: number | null;
+  completed?: boolean | null;
+}
+
+export interface LessonResult {
+  lessonId: string;
+  scorePercent: number;
+  stars: number;
+  completed: boolean;
+  isNewBest: boolean;
+  xpGained: number;
+  totalXp: number;
+  streakDays: number;
+  courseCompletionPercent: number;
+  nextLessonId?: string | null;
+  unitCompleted: boolean;
+  courseCompleted: boolean;
+}
+
+export interface LearnerSummary {
+  totalXp: number;
+  streakDays: number;
+  lessonsCompleted: number;
+  starsEarned: number;
+  wordsLearned: number;
+  myCourses: CourseCard[];
+  continueCourse?: CourseCard | null;
+}
+
+// ── Other ───────────────────────────────────────────────────────────────────
 
 export interface ClassSession {
   id: string;
@@ -66,72 +213,35 @@ export interface ClassSession {
   courseTitle: string;
   mentorId: string;
   mentorName: string;
+  title: string;
   scheduledAtUtc: string;
   durationMinutes: number;
-  status: number;
+  status: string;
   meetingUrl?: string | null;
-  summaryNotes?: string | null;
-}
-
-export interface Assignment {
-  id: string;
-  courseId: string;
-  courseTitle?: string;
-  chapterTitle?: string;
-  title: string;
-  description: string;
-  referenceFileUrl?: string | null;
-  totalMarks: number;
-  dueDateUtc?: string | null;
-  createdAtUtc: string;
-}
-
-export interface AssignmentSubmission {
-  id: string;
-  assignmentId: string;
-  assignmentTitle?: string;
-  studentId: string;
-  studentName?: string;
-  studentEmail?: string;
-  submissionText: string;
-  fileAttachmentUrl?: string | null;
-  marksObtained?: number | null;
-  teacherFeedback?: string | null;
-  gradedAtUtc?: string | null;
-  submittedAtUtc: string;
-}
-
-export interface AiResponse {
-  prompt: string;
-  response: string;
-  mode: string;
-  sourceLanguage?: string;
-  targetLanguage?: string;
-  timestampUtc: string;
+  meetingProvider?: string | null;
 }
 
 export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  type: number;
-  createdAtUtc: string;
+  type: string;
   isRead: boolean;
+  createdAtUtc: string;
 }
 
-export interface PagedResult<T> {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  createdAtUtc?: string;
 }
 
-export function levelLabel(l: number): string {
-  switch (l) {
-    case 0: return 'Beginner (A1-A2)';
-    case 1: return 'Intermediate (B1-B2)';
-    case 2: return 'Advanced (C1-C2)';
-    default: return 'All Levels';
-  }
+export interface AiResponse {
+  sessionId: string;
+  mode: string;
+  prompt: string;
+  response: string;
+  tokensUsed: number;
+  isMocked: boolean;
 }
-

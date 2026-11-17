@@ -1,240 +1,145 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { LearnerProvider, useLearner } from '../hooks/useLearner';
+import { Icon } from '../components/Icons';
+import { Logo } from '../components/ui';
 import './layout.css';
 
-// SVG Icons matching the reference design
-const Icons = {
-  MyClasses: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-      <path d="M6 12v5c0 3 6 3 6 3s6 0 6-3v-5" />
-    </svg>
-  ),
-  Dashboard: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  ),
-  Practice: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </svg>
-  ),
-  Assignments: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-      <line x1="9" y1="12" x2="15" y2="12" />
-      <line x1="9" y1="16" x2="13" y2="16" />
-    </svg>
-  ),
-  Translator: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  ),
-  ChikooAi: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="10" rx="2" />
-      <circle cx="12" cy="5" r="2" />
-      <path d="M12 7v4" />
-      <line x1="8" y1="16" x2="8.01" y2="16" />
-      <line x1="16" y1="16" x2="16.01" y2="16" />
-    </svg>
-  ),
-  Logout: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-  ),
-  Bell: () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  ),
-};
+const NAV = [
+  { to: '/', label: 'Home', icon: Icon.Home, end: true },
+  { to: '/courses', label: 'Courses', icon: Icon.Book },
+  { to: '/live-classes', label: 'Live classes', icon: Icon.Video },
+  { to: '/progress', label: 'Progress', icon: Icon.Chart },
+  { to: '/tutor', label: 'AI tutor', icon: Icon.Sparkles },
+  { to: '/notifications', label: 'Notifications', icon: Icon.Bell },
+];
+
+const MOBILE_NAV = NAV.filter((n) => n.to !== '/tutor');
 
 export function StudentLayout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  return (
+    <LearnerProvider>
+      <Shell />
+    </LearnerProvider>
+  );
+}
 
-  async function handleLogout() {
+function Shell() {
+  const { user, logout } = useAuth();
+  const { summary } = useLearner();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // The lesson player uses the full screen.
+  const immersive = location.pathname.startsWith('/lesson/');
+
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+
+  const initials = (user?.fullName || user?.email || '?')
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  async function onLogout() {
     await logout();
     navigate('/login');
   }
 
-  const studentName = user?.fullName || 'Gaurav Mehra';
+  if (immersive) {
+    return (
+      <div className="immersive">
+        <Outlet />
+      </div>
+    );
+  }
 
   return (
-    <div className="sse-shell">
-      {/* ── Left Sidebar ── */}
-      <aside className="sse-sidebar">
-        {/* Brand Header */}
-        <div className="sse-brand-box">
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <span className="brand-mark" aria-hidden />
-            <div>
-              <div className="sse-brand-title">SS Europa</div>
-              <div className="sse-brand-sub">by AMEI</div>
-            </div>
-          </Link>
+    <div className="shell">
+      <aside className="sidebar" aria-label="Main navigation">
+        <div className="sidebar-brand">
+          <Logo size={42} />
         </div>
-
-        {/* Sidebar Navigation */}
-        <nav className="sse-nav-menu">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `sse-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sse-item-icon"><Icons.MyClasses /></span>
-            <span>My Classes</span>
-          </NavLink>
-
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) => `sse-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sse-item-icon"><Icons.Dashboard /></span>
-            <span>Dashboard</span>
-          </NavLink>
-
-          <NavLink
-            to="/practice"
-            className={({ isActive }) => `sse-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sse-item-icon"><Icons.Practice /></span>
-            <span>Practice Exercises</span>
-          </NavLink>
-
-          <NavLink
-            to="/assignments"
-            className={({ isActive }) => `sse-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sse-item-icon"><Icons.Assignments /></span>
-            <span>Tests & Assignments</span>
-          </NavLink>
-
-          <NavLink
-            to="/translator"
-            className={({ isActive }) => `sse-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sse-item-icon"><Icons.Translator /></span>
-            <span>Smart Translator</span>
-          </NavLink>
-
-          <NavLink
-            to="/ai-tutor"
-            className={({ isActive }) => `sse-nav-item ${isActive ? 'active' : ''}`}
-          >
-            <span className="sse-item-icon"><Icons.ChikooAi /></span>
-            <span>Chikoo AI Assistant</span>
-          </NavLink>
-
-          <div className="sse-nav-divider" />
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="sse-nav-item sse-logout-item"
-            title="Sign out from student portal"
-          >
-            <span className="sse-item-icon"><Icons.Logout /></span>
-            <span>Logout</span>
-          </button>
+        <nav className="sidebar-nav">
+          {NAV.map(({ to, label, icon: I, end }) => (
+            <NavLink key={to} to={to} end={end} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <I size={20} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
         </nav>
-
-        {/* Bottom Mascot Card */}
-        <div className="sse-mascot-card">
-          <img
-            src="/images/ui/chikoo-card.png"
-            alt="Chikoo - Learn Italian with SS Europa"
-            className="sse-mascot-img"
-          />
+        <div className="sidebar-card">
+          <div className="sidebar-card-flag" aria-hidden>
+            <span /><span /><span />
+          </div>
+          <strong>Learn every day</strong>
+          <p>10 minutes a day is enough to keep your streak and remember new words.</p>
+        </div>
+        <div className="sidebar-user">
+          <div className="avatar">{initials}</div>
+          <div className="sidebar-user-meta">
+            <strong>{user?.fullName || 'Student'}</strong>
+            <span>{user?.email}</span>
+          </div>
+          <button className="icon-btn" onClick={onLogout} title="Sign out" aria-label="Sign out">
+            <Icon.Logout size={18} />
+          </button>
         </div>
       </aside>
 
-      {/* ── Main Area ── */}
-      <div className="sse-main">
-        {/* Top Header Bar */}
-        <header className="sse-topbar">
-          <div>
-            <div className="sse-title-row">
-              <span style={{ fontSize: '1.6rem', marginRight: '6px' }}>🎓</span>
-              <h1 className="sse-header-title">My Classes</h1>
-            </div>
-            {/* Italian Tricolor Underline */}
-            <div className="sse-tricolor-line">
-              <span className="tri-green" />
-              <span className="tri-white" />
-              <span className="tri-red" />
-            </div>
-            <p className="sse-header-sub">
-              Explore your learning journey with SS Europa
-            </p>
+      <div className="main">
+        <header className="topbar">
+          <div className="topbar-mobile-brand">
+            <Logo size={34} withText={false} />
+            <strong>SS Europa</strong>
           </div>
-
-          {/* User Profile Bar */}
-          <div className="sse-user-actions">
-            {/* Bell Notification */}
-            <Link to="/notifications" className="sse-bell-btn" title="Notifications">
-              <Icons.Bell />
-              <span className="sse-bell-badge">2</span>
-            </Link>
-
-            {/* Student Profile Chip */}
-            <div className="sse-profile-chip">
-              <img
-                src="/images/ui/chikoo-card.png"
-                alt={studentName}
-                className="sse-avatar-img"
-              />
-              <div className="sse-profile-text">
-                <span className="sse-name-label">{studentName}</span>
-                <span className="sse-role-label">Student</span>
+          <div className="topbar-stats">
+            <span className="stat-chip streak" title="Day streak">
+              <Icon.Flame size={18} /> {summary?.streakDays ?? 0}
+              <span className="stat-chip-label">day streak</span>
+            </span>
+            <span className="stat-chip xp" title="Total XP">
+              <Icon.Bolt size={18} /> {summary?.totalXp ?? 0}
+              <span className="stat-chip-label">XP</span>
+            </span>
+            <span className="stat-chip stars-chip" title="Stars earned">
+              <Icon.Star size={18} /> {summary?.starsEarned ?? 0}
+            </span>
+          </div>
+          <div className="topbar-user">
+            <button className="avatar avatar-btn" onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-label="Account menu">
+              {initials}
+            </button>
+            {menuOpen && (
+              <div className="user-menu" role="menu">
+                <div className="user-menu-head">
+                  <strong>{user?.fullName}</strong>
+                  <span>{user?.email}</span>
+                </div>
+                <NavLink to="/tutor" className="user-menu-item" role="menuitem"><Icon.Sparkles size={18} /> AI tutor</NavLink>
+                <NavLink to="/progress" className="user-menu-item" role="menuitem"><Icon.Chart size={18} /> My progress</NavLink>
+                <button className="user-menu-item danger" role="menuitem" onClick={onLogout}><Icon.Logout size={18} /> Sign out</button>
               </div>
-              <span className="sse-arrow-down">▾</span>
-            </div>
+            )}
           </div>
         </header>
 
-        {/* Page Outlet */}
-        <main className="sse-page-content">
+        <main className="content">
           <Outlet />
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <nav className="sse-mobile-nav">
-        <NavLink to="/" end className={({ isActive }) => `sse-mob-tab ${isActive ? 'active' : ''}`}>
-          <Icons.MyClasses />
-          <span>Classes</span>
-        </NavLink>
-        <NavLink to="/dashboard" className={({ isActive }) => `sse-mob-tab ${isActive ? 'active' : ''}`}>
-          <Icons.Dashboard />
-          <span>Dashboard</span>
-        </NavLink>
-        <NavLink to="/ai-tutor" className={({ isActive }) => `sse-mob-tab ${isActive ? 'active' : ''}`}>
-          <Icons.ChikooAi />
-          <span>Chikoo AI</span>
-        </NavLink>
-        <NavLink to="/practice" className={({ isActive }) => `sse-mob-tab ${isActive ? 'active' : ''}`}>
-          <Icons.Practice />
-          <span>Practice</span>
-        </NavLink>
-        <NavLink to="/assignments" className={({ isActive }) => `sse-mob-tab ${isActive ? 'active' : ''}`}>
-          <Icons.Assignments />
-          <span>Tests</span>
-        </NavLink>
+      <nav className="tabbar" aria-label="Main navigation">
+        {MOBILE_NAV.map(({ to, label, icon: I, end }) => (
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
+            <I size={22} />
+            <span>{label === 'Live classes' ? 'Live' : label === 'Notifications' ? 'Alerts' : label}</span>
+          </NavLink>
+        ))}
       </nav>
     </div>
   );
 }
-export default StudentLayout;

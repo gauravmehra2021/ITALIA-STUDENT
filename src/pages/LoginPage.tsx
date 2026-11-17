@@ -1,359 +1,247 @@
-import type { FormEvent } from 'react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ErrorBox, SuccessBox } from '../components/StateBlock';
+import { useState, type FormEvent } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../services/api';
+import { Logo } from '../components/ui';
+import { Icon } from '../components/Icons';
+import './login.css';
+
+type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'otp';
 
 export function LoginPage() {
-  const { login, register, verifyOtp, loading } = useAuth();
+  const { user, login, register, verifyOtp } = useAuth();
   const navigate = useNavigate();
-
-  const [mode, setMode] = useState<'login' | 'register' | 'otp' | 'forgot' | 'reset'>('login');
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [code, setCode] = useState('');
+  const [challengeId, setChallengeId] = useState<string | null>(null);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
-  const [demoOtpHint, setDemoOtpHint] = useState<string | null>(null);
-
-  // Forgot password state
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [resetChallengeId, setResetChallengeId] = useState<string | null>(null);
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  function fillDemoStudent() {
-    setEmail('student@sseuropa.demo');
-    setPassword('Demo@12345');
+  if (user) return <Navigate to="/" replace />;
+
+  function go(next: Mode) {
+    setMode(next);
     setError(null);
-    setSuccess('Demo credentials filled. Click "Sign In" to continue!');
+    setInfo(null);
   }
 
-  async function handleLogin(e: FormEvent) {
-    e.preventDefault();
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
     setError(null);
-    setSuccess(null);
     try {
-      const res = await login(email.trim(), password);
+      await action();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const onLogin = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      const res = await login(email, password);
       if (res.requiresOtp && res.pendingUserId) {
         setPendingUserId(res.pendingUserId);
-        setDemoOtpHint(res.demoOtpHint ?? null);
-        setMode('otp');
-        setSuccess('Verification code sent to your email. Enter OTP below to continue.');
+        go('otp');
+        setInfo('We sent a 6-digit code to your email.');
         return;
       }
       navigate('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid email or password.');
-    }
-  }
+    });
+  };
 
-  async function handleRegister(e: FormEvent) {
+  const onRegister = (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    try {
-      const user = await register({
-        fullName: fullName.trim(),
-        email: email.trim(),
-        password,
-      });
-      setPendingUserId(user.id);
-      setMode('otp');
-      setSuccess('Account created! Verification code sent to your email via Brevo.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Email might already be taken.');
-    }
-  }
+    void run(async () => {
+      await register({ email, password, firstName: firstName.trim(), lastName: lastName.trim() });
+      navigate('/courses');
+    });
+  };
 
-  async function handleVerifyOtp(e: FormEvent) {
+  const onForgot = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      const res = await authApi.forgotPassword(email.trim());
+      setChallengeId(res.challengeId);
+      go('reset');
+      setInfo('If this email has an account, we sent a 6-digit code to it.');
+    });
+  };
+
+  const onReset = (e: FormEvent) => {
+    e.preventDefault();
+    if (!challengeId) return;
+    void run(async () => {
+      await authApi.resetPassword({ challengeId, code: code.trim(), newPassword: password });
+      go('login');
+      setCode('');
+      setInfo('Your password has been changed. You can sign in now.');
+    });
+  };
+
+  const onOtp = (e: FormEvent) => {
     e.preventDefault();
     if (!pendingUserId) return;
-    setError(null);
-    try {
-      await verifyOtp(pendingUserId, otpCode.trim());
+    void run(async () => {
+      await verifyOtp(pendingUserId, code.trim());
       navigate('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid or expired OTP code.');
-    }
-  }
+    });
+  };
 
-  async function handleForgotPassword(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    try {
-      const res = await authApi.forgotPassword(forgotEmail.trim());
-      setResetChallengeId(res.challengeId);
-      setMode('reset');
-      setSuccess('Reset code sent to your email. Enter 6-digit code and new password.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not request password reset.');
-    }
-  }
+  const title = {
+    login: 'Welcome back',
+    register: 'Create your free account',
+    forgot: 'Forgot your password?',
+    reset: 'Choose a new password',
+    otp: 'Check your email',
+  }[mode];
 
-  async function handleResetPassword(e: FormEvent) {
-    e.preventDefault();
-    if (!resetChallengeId) return;
-    setError(null);
-    setSuccess(null);
-    try {
-      await authApi.resetPassword({
-        challengeId: resetChallengeId,
-        code: resetCode.trim(),
-        newPassword,
-      });
-      setMode('login');
-      setEmail(forgotEmail);
-      setPassword(newPassword);
-      setSuccess('Password updated successfully! Sign in with your new password.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Password reset failed.');
-    }
-  }
+  const subtitle = {
+    login: 'Sign in to continue learning Italian.',
+    register: 'Start learning Italian today — it takes one minute.',
+    forgot: 'Enter your email and we\'ll send you a code to reset it.',
+    reset: 'Enter the code from the email and your new password.',
+    otp: 'Enter the 6-digit code we sent you.',
+  }[mode];
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #083c4d 0%, #0D5C75 50%, #0077b6 100%)', padding: '1.5rem' }}>
-      <div style={{ width: '100%', maxWidth: '440px', background: '#ffffff', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
-        
-        {/* Header */}
-        <div style={{ background: '#ffffff', padding: '2rem 2rem 1.25rem 2rem', textAlign: 'center', borderBottom: '1px solid #f1f5f9' }}>
-          <img
-            src="/images/updated-logo.png"
-            alt="SS EUROPA"
-            style={{ height: '54px', width: 'auto', margin: '0 auto 10px', display: 'block', objectFit: 'contain' }}
-          />
-          <p style={{ color: 'var(--muted)', fontSize: '0.88rem', margin: '0', fontWeight: 600 }}>Official Student Learning Portal</p>
-        </div>
-
-        <div style={{ padding: '1.75rem 2rem 2rem' }}>
-          {error && <ErrorBox message={error} />}
-          {success && <SuccessBox message={success} />}
-
-          {/* Quick Demo Fill Button */}
-          {mode === 'login' && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={fillDemoStudent}
-              style={{ width: '100%', marginBottom: '1.25rem', borderColor: 'var(--accent)', background: '#fffbeb', color: '#92400e', fontSize: '0.88rem' }}
-            >
-              ⚡ Fill Demo Student (student@sseuropa.demo)
-            </button>
-          )}
-
-          {/* LOGIN FORM */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin}>
-              <div className="field">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  placeholder="student@sseuropa.demo"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="field">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label>Password</label>
-                  <button
-                    type="button"
-                    onClick={() => { setMode('forgot'); setForgotEmail(email); setError(null); setSuccess(null); }}
-                    style={{ background: 'none', border: 'none', color: 'var(--azure)', fontSize: '0.8rem', padding: 0 }}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-
-              <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
-                {loading ? 'Signing in…' : 'Sign In to Portal'}
-              </button>
-
-              <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.88rem', color: 'var(--muted)' }}>
-                New student?{' '}
-                <button
-                  type="button"
-                  onClick={() => { setMode('register'); setError(null); setSuccess(null); }}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Create Account
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* REGISTER FORM */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegister}>
-              <div className="field">
-                <label>Full Name</label>
-                <input
-                  placeholder="Marco Rossi"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="field">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="field">
-                <label>Choose Password</label>
-                <input
-                  type="password"
-                  placeholder="Minimum 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
-                {loading ? 'Creating account…' : 'Register & Receive Code'}
-              </button>
-
-              <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.88rem', color: 'var(--muted)' }}>
-                Already registered?{' '}
-                <button
-                  type="button"
-                  onClick={() => { setMode('login'); setError(null); setSuccess(null); }}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Sign In
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* OTP VERIFICATION */}
-          {mode === 'otp' && (
-            <form onSubmit={handleVerifyOtp}>
-              <p style={{ fontSize: '0.88rem', color: 'var(--muted)', marginBottom: '1rem' }}>
-                Enter the 6-digit code sent to your registered email to activate your student workspace.
-              </p>
-              {demoOtpHint && <SuccessBox message={`Demo verification code: ${demoOtpHint}`} />}
-
-              <div className="field">
-                <label>Verification Code (OTP)</label>
-                <input
-                  placeholder="123456"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  required
-                  style={{ textAlign: 'center', fontSize: '1.25rem', letterSpacing: '4px' }}
-                />
-              </div>
-
-              <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
-                {loading ? 'Verifying…' : 'Verify & Enter Workspace'}
-              </button>
-
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => { setMode('login'); setError(null); }}
-                  style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.85rem', cursor: 'pointer' }}
-                >
-                  Back to login
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* FORGOT PASSWORD */}
-          {mode === 'forgot' && (
-            <form onSubmit={handleForgotPassword}>
-              <p style={{ fontSize: '0.88rem', color: 'var(--muted)', marginBottom: '1rem' }}>
-                Enter your email address and we'll send you a password reset verification code.
-              </p>
-
-              <div className="field">
-                <label>Registered Email</label>
-                <input
-                  type="email"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
-                {loading ? 'Sending code…' : 'Send Reset Code'}
-              </button>
-
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setMode('login')}
-                  style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.85rem' }}
-                >
-                  Back to login
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* RESET PASSWORD */}
-          {mode === 'reset' && (
-            <form onSubmit={handleResetPassword}>
-              <div className="field">
-                <label>6-Digit Reset Code</label>
-                <input
-                  placeholder="123456"
-                  maxLength={6}
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="field">
-                <label>New Strong Password</label>
-                <input
-                  type="password"
-                  placeholder="Minimum 6 characters"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
-                {loading ? 'Updating password…' : 'Save New Password & Sign In'}
-              </button>
-            </form>
-          )}
-
-        </div>
+  const passwordField = (label: string, autoComplete: string) => (
+    <div className="field">
+      <label htmlFor="password">{label}</label>
+      <div className="password-wrap">
+        <input
+          id="password"
+          className="input"
+          type={showPassword ? 'text' : 'password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={mode === 'login' ? undefined : 8}
+          autoComplete={autoComplete}
+          placeholder={mode === 'login' ? 'Your password' : 'At least 8 characters'}
+        />
+        <button type="button" className="password-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+          <Icon.Eye size={18} />
+        </button>
       </div>
     </div>
   );
-}
 
+  return (
+    <div className="auth">
+      <section className="auth-hero" aria-hidden>
+        <div className="auth-hero-overlay" />
+        <div className="auth-hero-content">
+          <Logo size={56} light />
+          <div>
+            <h1>Learn the Italian you need for life in Italy.</h1>
+            <p>Short lessons with pictures and audio, live classes with real teachers, and a course built for work, study and everyday life.</p>
+          </div>
+          <ul className="auth-points">
+            <li><span>📸</span> Words with pictures & native audio</li>
+            <li><span>🎥</span> Weekly live speaking classes</li>
+            <li><span>🏅</span> Prepare for the CILS A1 & A2 exams</li>
+          </ul>
+          <div className="auth-flag"><span /><span /><span /></div>
+        </div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="auth-card">
+          <div className="auth-mobile-logo"><Logo size={48} /></div>
+
+          {(mode === 'login' || mode === 'register') && (
+            <div className="auth-tabs" role="tablist">
+              <button role="tab" aria-selected={mode === 'login'} className={mode === 'login' ? 'active' : ''} onClick={() => go('login')}>Sign in</button>
+              <button role="tab" aria-selected={mode === 'register'} className={mode === 'register' ? 'active' : ''} onClick={() => go('register')}>Create account</button>
+            </div>
+          )}
+
+          <div className="auth-head">
+            <h2>{title}</h2>
+            <p>{subtitle}</p>
+          </div>
+
+          {error && <div className="alert alert-error" role="alert">{error}</div>}
+          {info && <div className="alert alert-success" role="status">{info}</div>}
+
+          {mode === 'login' && (
+            <form onSubmit={onLogin} className="stack">
+              <div className="field">
+                <label htmlFor="email">Email</label>
+                <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
+              </div>
+              {passwordField('Password', 'current-password')}
+              <button type="button" className="link-btn" onClick={() => go('forgot')}>Forgot password?</button>
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+            </form>
+          )}
+
+          {mode === 'register' && (
+            <form onSubmit={onRegister} className="stack">
+              <div className="auth-row">
+                <div className="field">
+                  <label htmlFor="first">First name</label>
+                  <input id="first" className="input" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" />
+                </div>
+                <div className="field">
+                  <label htmlFor="last">Surname</label>
+                  <input id="last" className="input" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" />
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="email">Email</label>
+                <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
+              </div>
+              {passwordField('Password', 'new-password')}
+              <button className="btn btn-success btn-lg btn-block" disabled={busy}>{busy ? 'Creating your account…' : 'Create account'}</button>
+              <p className="muted small" style={{ textAlign: 'center' }}>The same account works on the website and in the SS Europa app.</p>
+            </form>
+          )}
+
+          {mode === 'forgot' && (
+            <form onSubmit={onForgot} className="stack">
+              <div className="field">
+                <label htmlFor="email">Email</label>
+                <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+              </div>
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Sending…' : 'Send code'}</button>
+              <button type="button" className="link-btn center" onClick={() => go('login')}>← Back to sign in</button>
+            </form>
+          )}
+
+          {mode === 'reset' && (
+            <form onSubmit={onReset} className="stack">
+              <div className="field">
+                <label htmlFor="code">6-digit code</label>
+                <input id="code" className="input code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required autoComplete="one-time-code" />
+              </div>
+              {passwordField('New password', 'new-password')}
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Saving…' : 'Change password'}</button>
+              <button type="button" className="link-btn center" onClick={() => go('login')}>← Back to sign in</button>
+            </form>
+          )}
+
+          {mode === 'otp' && (
+            <form onSubmit={onOtp} className="stack">
+              <div className="field">
+                <label htmlFor="code">6-digit code</label>
+                <input id="code" className="input code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required autoComplete="one-time-code" />
+              </div>
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Checking…' : 'Verify and continue'}</button>
+              <button type="button" className="link-btn center" onClick={() => go('login')}>← Back to sign in</button>
+            </form>
+          )}
+        </div>
+        <p className="auth-foot">© SS Europa — Sostegno e Soluzioni per l'Europa</p>
+      </section>
+    </div>
+  );
+}
