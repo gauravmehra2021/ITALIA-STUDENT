@@ -11,7 +11,6 @@ import { LiveClassesPage } from './pages/LiveClassesPage';
 import { AiTutorPage } from './pages/AiTutorPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { NotificationsPage } from './pages/NotificationsPage';
-import { SupportPage } from './pages/SupportPage';
 import { StateBlock } from './components/StateBlock';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -59,7 +58,6 @@ export const App: React.FC = () => {
             <Route path="/ai" element={<AiTutorPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/support" element={<SupportPage />} />
           </Route>
 
           {/* Fallback */}
