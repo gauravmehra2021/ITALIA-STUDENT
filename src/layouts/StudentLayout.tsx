@@ -85,9 +85,7 @@ export function StudentLayout() {
         {/* Brand Header */}
         <div className="sse-brand-box">
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <div className="sse-brand-icon">
-              <span style={{ fontSize: '1.4rem' }}>☀️</span>
-            </div>
+            <span className="brand-mark" aria-hidden />
             <div>
               <div className="sse-brand-title">SS Europa</div>
               <div className="sse-brand-sub">by AMEI</div>
