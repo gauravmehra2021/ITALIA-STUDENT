@@ -3,6 +3,7 @@ import { RichText } from '../lib/RichText';
 import { embedUrl, mediaUrl } from '../lib/media';
 import { speak, stopSpeaking } from '../lib/speech';
 import { AudioButton } from './ui';
+import { RoleplayBlock } from './Roleplay';
 import { Icon } from './Icons';
 import type { DialogueLine, LessonBlock, VocabularyItem } from '../types';
 
@@ -12,6 +13,8 @@ export function LessonBlockView({ block }: { block: LessonBlock }) {
       return <VocabularyBlock block={block} />;
     case 'Dialogue':
       return <DialogueBlock block={block} />;
+    case 'Roleplay':
+      return <RoleplayBlock block={block} />;
     case 'Table':
       return <TableBlock block={block} />;
     case 'Tip':

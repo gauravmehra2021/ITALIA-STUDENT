@@ -256,3 +256,18 @@ a.lesson-row:hover { border-color: var(--blue-500); transform: translateX(2px); 
   .enroll-bar { flex-direction: column; align-items: stretch; text-align: center; }
   .bubble { max-width: 90%; }
 }
+
+/* Course type filter */
+.cat-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.cat-filter::-webkit-scrollbar { display: none; }
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 7px; flex: none;
+  min-height: 42px; padding: 0 16px; border-radius: 999px;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-2);
+  font: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.cat-chip:hover { border-color: var(--line-strong); background: var(--blue-50); }
+.cat-chip.active { background: var(--blue-700); border-color: var(--blue-700); color: #fff; }
+.cat-count { min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 0.74rem; line-height: 20px; text-align: center; }
+.cat-chip.active .cat-count { background: rgba(255, 255, 255, 0.22); color: #fff; }

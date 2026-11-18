@@ -9,6 +9,14 @@ import { Icon } from '../components/Icons';
 import type { CourseCard } from '../types';
 import './pages.css';
 
+const FILTERS: { id: string; label: string; emoji: string; help: string }[] = [
+  { id: 'All', label: 'All courses', emoji: '📚', help: 'Every SS Europa course.' },
+  { id: 'Core', label: 'Italian levels', emoji: '🎓', help: 'Step by step from A1 to A2 and the CILS exam.' },
+  { id: 'Work', label: 'For work', emoji: '💼', help: 'Restaurants, hotels, care work, shops, warehouses, farms, building sites and delivery.' },
+  { id: 'Study', label: 'For students', emoji: '🏛️', help: 'Documents, university, finding a room, exams and student life.' },
+  { id: 'Visit', label: 'For visitors', emoji: '✈️', help: 'Airport, hotel, restaurants, shopping and emergencies on a trip.' },
+];
+
 const CATEGORY_LABEL: Record<string, string> = {
   Core: 'Core course',
   Work: 'Italian for work',
@@ -18,12 +26,16 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 export function CoursesPage() {
   const { data, error, loading, reload } = useAsync(() => learnApi.courses());
+  const [filter, setFilter] = useState('All');
 
   if (loading && !data) return <Loading label="Loading courses…" />;
   if (error || !data) return <ErrorState message={error ?? 'Could not load courses.'} onRetry={reload} />;
 
-  const mine = data.filter((c) => c.isEnrolled);
-  const others = data.filter((c) => !c.isEnrolled);
+  const countOf = (id: string) => (id === 'All' ? data.length : data.filter((c) => c.course.category === id).length);
+  const shown = data.filter((c) => filter === 'All' || c.course.category === filter);
+  const mine = shown.filter((c) => c.isEnrolled);
+  const others = shown.filter((c) => !c.isEnrolled);
+  const active = FILTERS.find((f) => f.id === filter) ?? FILTERS[0];
 
   return (
     <div className="page">
@@ -33,6 +45,15 @@ export function CoursesPage() {
           <p>Structured courses from your first word to the CILS exam, with a live class every week.</p>
         </div>
       </div>
+
+      <div className="cat-filter" role="tablist" aria-label="Course type">
+        {FILTERS.filter((f) => countOf(f.id) > 0).map((f) => (
+          <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} className={`cat-chip ${filter === f.id ? 'active' : ''}`} onClick={() => setFilter(f.id)}>
+            <span aria-hidden>{f.emoji}</span> {f.label} <span className="cat-count">{countOf(f.id)}</span>
+          </button>
+        ))}
+      </div>
+      {filter !== 'All' && <p className="muted" style={{ marginTop: -8 }}>{active.help}</p>}
 
       {data.length === 0 && <Empty icon="📚" title="No courses yet">New courses are coming soon.</Empty>}
 

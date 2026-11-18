@@ -128,4 +128,5 @@ export const KIND_META: Record<LessonKind, { label: string; emoji: string; color
   Review: { label: 'Review', emoji: '🏆', color: '#b07400', bg: '#fff4cf' },
   Video: { label: 'Video', emoji: '🎬', color: '#c8202e', bg: '#fde4e6' },
   Exam: { label: 'Exam', emoji: '📝', color: '#0f1b33', bg: '#eef1f6' },
+  Conversation: { label: 'Speaking', emoji: '🗣️', color: '#0f766e', bg: '#ccfbf1' },
 };
