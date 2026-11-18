@@ -12,7 +12,10 @@ import type {
   User,
 } from '../types';
 
-export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:5080';
+// Live builds must never fall back to a local address (that breaks sign-in for every visitor).
+export const API_BASE =
+  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ||
+  (import.meta.env.PROD ? 'https://api.sseuropa.com' : 'http://localhost:5080');
 
 export const TOKEN_STORAGE_KEY = 'sseuropa_student_token';
 export const USER_STORAGE_KEY = 'sseuropa_student_user';
