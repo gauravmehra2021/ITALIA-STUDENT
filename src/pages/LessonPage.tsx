@@ -202,7 +202,11 @@ function ResultView({ lesson, result, saving, error, total, correct, onRetry, on
   if (!result) return null;
 
   const passed = result.stars > 0;
-  const title = result.courseCompleted ? 'Course completed! 🎓' : result.unitCompleted ? 'Unit completed! 🏆' : passed ? (result.stars === 3 ? 'Perfetto!' : 'Ben fatto!') : 'Keep practising';
+  const isTest = lesson.kind === 'Exam';
+  const passMark = isTest ? 60 : 50;
+  const title = result.courseCompleted ? 'Course completed! 🎓' : result.unitCompleted ? 'Unit completed! 🏆'
+    : passed ? (isTest ? 'Test passed! 🎉' : result.stars === 3 ? 'Perfetto!' : 'Ben fatto!')
+    : isTest ? 'Not passed yet' : 'Keep practising';
   return (
     <div className="result">
       <div className="result-stars">
@@ -215,7 +219,7 @@ function ResultView({ lesson, result, saving, error, total, correct, onRetry, on
       <h1>{title}</h1>
       <p className="muted">
         {total > 0 ? <>You answered <strong>{correct} of {total}</strong> correctly ({result.scorePercent}%).</> : 'Lesson completed.'}
-        {!passed && ' You need at least 50% to complete the lesson — try again!'}
+        {!passed && ` You need at least ${passMark}% to ${isTest ? 'pass the test' : 'complete the lesson'}. Try again!`}
       </p>
       <div className="result-tiles">
         <div className="result-tile xp"><Icon.Bolt size={22} /><strong>+{result.xpGained}</strong><span>XP</span></div>
@@ -224,7 +228,7 @@ function ResultView({ lesson, result, saving, error, total, correct, onRetry, on
       </div>
       {lesson.homework && passed && (
         <div className="homework" style={{ textAlign: 'left' }}>
-          <h3>📝 Homework for the live class</h3>
+          <h3>📝 {isTest ? 'With your teacher' : 'Homework for the live class'}</h3>
           <RichText text={lesson.homework} />
         </div>
       )}

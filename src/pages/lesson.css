@@ -116,6 +116,13 @@
 .dl-line strong { font-size: 1rem; }
 .dl-en { font-size: 0.88rem; color: var(--muted); }
 
+/* Punjabi meaning (romanised), under the English one */
+.vocab-pa, .phrase-text .phrase-pa, .dl-pa { font-size: 0.82rem; color: var(--green-600); font-weight: 600; }
+.vocab-pa abbr, .phrase-pa abbr, .dl-pa abbr {
+  text-decoration: none; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em;
+  padding: 1px 5px; margin-right: 3px; border-radius: 6px; background: var(--green-100); color: var(--green-600); vertical-align: 1px;
+}
+
 /* Grammar tables */
 .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); }
 .g-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }

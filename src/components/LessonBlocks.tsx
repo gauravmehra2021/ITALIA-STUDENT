@@ -131,6 +131,7 @@ function VocabCard({ item }: { item: VocabularyItem }) {
       ) : (
         <div className="vocab-back">
           <strong className="vocab-en">{item.english}</strong>
+          {item.punjabi && <span className="vocab-pa" lang="pa-Latn"><abbr title="Punjabi">PA</abbr> {item.punjabi}</span>}
           <span className="vocab-it-small">{item.italian}</span>
           {item.example && (
             <span className="vocab-example">
@@ -151,6 +152,7 @@ function PhraseRow({ item }: { item: VocabularyItem }) {
       <div className="phrase-text">
         <strong>{item.italian}</strong>
         <span>{item.english}</span>
+        {item.punjabi && <span className="phrase-pa" lang="pa-Latn"><abbr title="Punjabi">PA</abbr> {item.punjabi}</span>}
       </div>
       {item.pronunciation && <span className="phrase-pron">{item.pronunciation}</span>}
     </div>
@@ -161,6 +163,7 @@ function DialogueBlock({ block }: { block: LessonBlock }) {
   const [showEnglish, setShowEnglish] = useState(true);
   const [playing, setPlaying] = useState<number | null>(null);
   const speakers = [...new Set(block.lines.map((l) => l.speaker))];
+  const translationLabel = block.lines.some((l) => l.punjabi) ? 'translation' : 'English';
 
   async function playAll() {
     for (let i = 0; i < block.lines.length; i++) {
@@ -178,7 +181,7 @@ function DialogueBlock({ block }: { block: LessonBlock }) {
       <div className="lb-head">
         <h3>💬 {block.title || 'Dialogue'}</h3>
         <div className="row" style={{ gap: 8 }}>
-          <button className="btn btn-sm" onClick={() => setShowEnglish((v) => !v)}>{showEnglish ? 'Hide English' : 'Show English'}</button>
+          <button className="btn btn-sm" onClick={() => setShowEnglish((v) => !v)}>{showEnglish ? `Hide ${translationLabel}` : `Show ${translationLabel}`}</button>
           {playing === null ? (
             <button className="btn btn-sm btn-success" onClick={() => void playAll()}><Icon.Play size={14} /> Play all</button>
           ) : (
@@ -208,6 +211,7 @@ function DialogueBubble({ line, right, active, showEnglish }: { line: DialogueLi
           <AudioButton text={line.italian} audioUrl={line.audioUrl} size="sm" />
         </div>
         {showEnglish && <span className="dl-en">{line.english}</span>}
+        {showEnglish && line.punjabi && <span className="dl-pa" lang="pa-Latn"><abbr title="Punjabi">PA</abbr> {line.punjabi}</span>}
       </div>
     </div>
   );
