@@ -34,8 +34,9 @@ export const Icon = {
   Turtle: (p: P) => (<svg {...base(p)}><path d="M4 15c0-4 3.6-7 8-7s8 3 8 7z" /><path d="M20 15h1.5a1.5 1.5 0 0 0 0-3H20" /><path d="M7 15v3M17 15v3" /></svg>),
   File: (p: P) => (<svg {...base(p)}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></svg>),
   Download: (p: P) => (<svg {...base(p)}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5M12 15V3" /></svg>),
-  ArrowRight: (p: P) => (<svg {...base(p)}><path d="M5 12h14M13 6l6 6-6 6" /></svg>),
-  ArrowLeft: (p: P) => (<svg {...base(p)}><path d="M19 12H5M11 18l-6-6 6-6" /></svg>),
+  // Arrows point the other way when the page is right-to-left (Urdu): see .flip-rtl.
+  ArrowRight: (p: P) => (<svg {...base({ ...p, className: `flip-rtl ${p.className ?? ''}` })}><path d="M5 12h14M13 6l6 6-6 6" /></svg>),
+  ArrowLeft: (p: P) => (<svg {...base({ ...p, className: `flip-rtl ${p.className ?? ''}` })}><path d="M19 12H5M11 18l-6-6 6-6" /></svg>),
   Flame: (p: P) => (<svg {...base(p)}><path d="M12 22c4 0 7-2.8 7-7 0-4.5-4-7.5-5-12-2 2-3 4-3 6-1-1-2-2-2.5-3C6 8 5 10.5 5 15c0 4.2 3 7 7 7z" fill="currentColor" stroke="none" /></svg>),
   Star: (p: P) => (<svg {...base(p)}><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z" fill="currentColor" stroke="none" /></svg>),
   Trophy: (p: P) => (<svg {...base(p)}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" /><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" /></svg>),

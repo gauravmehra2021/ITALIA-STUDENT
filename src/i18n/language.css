@@ -1,0 +1,75 @@
+/* Language chooser (dashboard card + compact select) */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.lang-card { display: flex; flex-direction: column; gap: 14px; }
+.lang-card-head { display: flex; gap: 12px; align-items: flex-start; }
+.lang-card-head h2 { font-size: 1.05rem; margin: 0 0 2px; }
+.lang-card-icon {
+  width: 40px; height: 40px; flex: none; display: grid; place-items: center;
+  border-radius: 12px; background: var(--blue-50); font-size: 22px;
+}
+
+.lang-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .lang-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lang-option {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 6px; border-radius: 14px; cursor: pointer; font: inherit;
+  border: 2px solid var(--line); background: var(--surface); color: var(--ink);
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.lang-option strong { font-size: 0.98rem; }
+.lang-option span { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.lang-option:hover:not(:disabled) { border-color: var(--blue-500); transform: translateY(-1px); }
+.lang-option.active { border-color: var(--green-600); background: var(--green-100); }
+.lang-option.active span { color: var(--green-600); }
+.lang-option:focus-visible { outline: 3px solid var(--blue-500); outline-offset: 2px; }
+.lang-option:disabled { cursor: progress; opacity: 0.75; }
+
+.lang-status { margin: 0; font-weight: 700; }
+.lang-status.ok { color: var(--green-600); }
+.lang-status.warn { color: var(--orange-500); }
+
+.lang-select {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface);
+  font-size: 0.85rem; font-weight: 700; color: var(--ink-2);
+}
+.lang-select select {
+  border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; padding: 4px 2px;
+}
+.lang-select select:focus-visible { outline: 2px solid var(--blue-500); border-radius: 6px; }
+.lang-select.in-menu { margin: 6px 12px 4px; display: flex; }
+.lang-select.in-menu select { flex: 1; }
+
+/* Devanagari needs a font that has the letters (Plus Jakarta Sans doesn't). */
+:lang(hi) body, :lang(hi) button, :lang(hi) input, :lang(hi) select, :lang(hi) textarea {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Nirmala UI', 'Mangal', system-ui, sans-serif;
+}
+
+/* Urdu: Nastaliq letters (Latin text keeps Plus Jakarta Sans). Nastaliq is tall, so lines get more room. */
+:lang(ur) body, :lang(ur) button, :lang(ur) input, :lang(ur) select, :lang(ur) textarea {
+  font-family: 'Plus Jakarta Sans', 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', 'Noto Naskh Arabic', system-ui, sans-serif;
+}
+:lang(ur) .tr { line-height: 2; font-weight: 500; }
+:lang(ur) .tr-rich p, :lang(ur) .tr-rich li { line-height: 2.1; }
+
+/* Right-to-left page (Urdu): English and Italian paragraphs keep their own direction. */
+[dir='rtl'] body *:not(.tr, .tr *) { unicode-bidi: plaintext; }
+[dir='rtl'] .tr { unicode-bidi: isolate; }
+[dir='rtl'] .flip-rtl { transform: scaleX(-1); }
+
+@media (max-width: 420px) {
+  .lang-option { padding: 10px 4px; }
+  .lang-option strong { font-size: 0.9rem; }
+}
+
+/* Translated content line (Punjabi / Hindi / Urdu) under the original English text */
+.tr { display: block; font-size: 0.86em; line-height: 1.4; font-weight: 600; color: var(--green-600); margin-top: 2px; font-style: normal; }
+.tr-block { margin-top: 4px; }
+.tr-rich { font-size: 0.9em; color: var(--green-600); margin-top: 6px; padding-inline-start: 10px; border-inline-start: 3px solid var(--green-100); }
+.tr-rich p, .tr-rich li { color: var(--green-600); }
+.on-dark .tr, .course-hero .tr, .continue-card .tr { color: #b8f2d2; }

@@ -14,9 +14,11 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<AuthResponse>;
-  register: (payload: { email: string; password: string; firstName: string; lastName: string }) => Promise<AuthResponse>;
+  register: (payload: { email: string; password: string; firstName: string; lastName: string; preferredLanguage?: string }) => Promise<AuthResponse>;
   verifyOtp: (userId: string, code: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
+  /** Updates the signed-in user kept in memory and on this device (e.g. after changing the language). */
+  updateUser: (patch: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => apply(await authApi.login(email.trim(), password)), [apply]);
 
   const register = useCallback(
-    async (payload: { email: string; password: string; firstName: string; lastName: string }) => {
+    async (payload: { email: string; password: string; firstName: string; lastName: string; preferredLanguage?: string }) => {
       await authApi.register({ ...payload, email: payload.email.trim() });
       return apply(await authApi.login(payload.email.trim(), payload.password));
     },
@@ -65,7 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, token, login, register, verifyOtp, logout }), [user, token, login, register, verifyOtp, logout]);
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      const current = getStoredToken();
+      if (current) setStoredAuth(current, next);
+      return next;
+    });
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, token, login, register, verifyOtp, logout, updateUser }),
+    [user, token, login, register, verifyOtp, logout, updateUser],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

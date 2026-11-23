@@ -54,6 +54,7 @@
   gap: 20px;
   padding: 40px 24px;
   background: radial-gradient(circle at 80% 0%, var(--blue-50), transparent 45%), var(--surface);
+  position: relative;
 }
 .auth-card { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
 .auth-mobile-logo { display: none; }
@@ -81,10 +82,10 @@
 .auth-tabs button.active { background: var(--surface); color: var(--blue-700); box-shadow: var(--shadow-sm); }
 
 .password-wrap { position: relative; }
-.password-wrap .input { padding-right: 46px; }
+.password-wrap .input { padding-inline-end: 46px; }
 .password-toggle {
   position: absolute;
-  right: 6px;
+  inset-inline-end: 6px;
   top: 50%;
   transform: translateY(-50%);
   width: 36px;
@@ -116,4 +117,10 @@
   .auth-hero { display: none; }
   .auth-mobile-logo { display: flex; justify-content: center; }
   .auth-panel { justify-content: flex-start; padding-top: 32px; }
+}
+
+/* Language choice on the sign-in page */
+.auth-lang { position: absolute; top: 18px; inset-inline-end: 20px; }
+@media (max-width: 900px) {
+  .auth-lang { position: static; align-self: flex-end; }
 }

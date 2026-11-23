@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { I18nProvider } from './i18n';
+import { LanguageSync } from './i18n/LanguagePicker';
 import { StudentLayout } from './layouts/StudentLayout';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
@@ -21,7 +23,9 @@ function Protected({ children }: { children: ReactNode }) {
 export function App() {
   return (
     <BrowserRouter>
+      <I18nProvider>
       <AuthProvider>
+        <LanguageSync />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
@@ -48,6 +52,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
+      </I18nProvider>
     </BrowserRouter>
   );
 }

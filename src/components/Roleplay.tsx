@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { speak, stopSpeaking } from '../lib/speech';
 import { AudioButton } from './ui';
 import { Icon } from './Icons';
+import { useI18n } from '../i18n';
+import { Tr } from '../i18n/content';
 import type { LessonBlock } from '../types';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -60,6 +62,7 @@ function bestMatch(said: string, replies: Reply[]) {
 }
 
 export function RoleplayBlock({ block }: { block: LessonBlock }) {
+  const { t } = useI18n();
   const lines = block.lines;
   const partner = block.caption || lines.find((l) => !l.isLearner)?.speaker || 'Partner';
 
@@ -125,7 +128,7 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
 
   function listen() {
     if (!RecognitionCtor) {
-      setNotice('Speaking needs Chrome, Edge or a recent Safari. You can tap or type your answer instead.');
+      setNotice(t('roleplay.noSpeech'));
       return;
     }
     stopSpeaking();
@@ -139,10 +142,10 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
         const hit = bestMatch(said, replies);
         if (hit) return answer(hit, said);
       }
-      setNotice(`I heard “${alts[0] ?? '…'}”. Try again, slowly — or tap a reply.`);
+      setNotice(t('roleplay.heard', { text: alts[0] ?? '…' }));
     };
     rec.onerror = (e) => {
-      setNotice(e.error === 'not-allowed' ? 'Allow the microphone to practise speaking (or tap a reply).' : 'I didn\'t hear anything. Try again.');
+      setNotice(e.error === 'not-allowed' ? t('roleplay.allowMic') : t('roleplay.heardNothing'));
     };
     rec.onend = () => setListening(false);
     recRef.current = rec;
@@ -155,7 +158,7 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
     if (!typed.trim()) return;
     const hit = bestMatch(typed, replies);
     if (hit) answer(hit, typed.trim());
-    else setNotice('Not quite. Look at the suggestions and try again.');
+    else setNotice(t('roleplay.notQuite'));
   }
 
   function restart() {
@@ -169,23 +172,21 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
   return (
     <section className="lb rp">
       <div className="lb-head">
-        <h3>🗣️ {block.title || 'Speaking practice'}</h3>
-        <button className="btn btn-sm" onClick={() => setShowEnglish((v) => !v)}>{showEnglish ? 'Hide English' : 'Show English'}</button>
+        <h3>🗣️ {block.title || t('roleplay.title')}</h3>
+        <button className="btn btn-sm" onClick={() => setShowEnglish((v) => !v)}>{showEnglish ? t('roleplay.hideEnglish') : t('roleplay.showEnglish')}</button>
       </div>
 
       {!started ? (
         <div className="rp-start card card-pad">
           <div className="rp-start-avatars" aria-hidden>
             <span className="rp-avatar">{partner.slice(0, 1)}</span>
-            <span className="rp-avatar you">You</span>
+            <span className="rp-avatar you">{t('roleplay.you')}</span>
           </div>
           <div>
-            <strong>Talk with {partner}</strong>
-            <p className="muted small">
-              Listen to {partner}, then answer in Italian: tap a suggestion, type it, or press the microphone and say it out loud.
-            </p>
+            <strong>{t('roleplay.talkWith', { name: partner })}</strong>
+            <p className="muted small">{t('roleplay.intro', { name: partner })}</p>
           </div>
-          <button className="btn btn-success" onClick={() => setStarted(true)}><Icon.Play size={16} /> Start conversation</button>
+          <button className="btn btn-success" onClick={() => setStarted(true)}><Icon.Play size={16} /> {t('roleplay.start')}</button>
         </div>
       ) : (
         <div className="rp-chat card">
@@ -199,7 +200,8 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
                     <AudioButton text={m.italian} size="sm" />
                   </div>
                   {showEnglish && <span className="rp-en">{m.english}</span>}
-                  {m.heard && normalize(m.heard) !== normalize(m.italian) && <span className="rp-heard">You said: “{m.heard}”</span>}
+                  {showEnglish && <Tr text={m.english} />}
+                  {m.heard && normalize(m.heard) !== normalize(m.italian) && <span className="rp-heard">{t('roleplay.youSaid', { text: m.heard })}</span>}
                 </div>
               </div>
             ))}
@@ -211,13 +213,14 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
 
           {learnerTurn && (
             <div className="rp-turn">
-              <div className="rp-turn-label">Your turn — choose or say one of these:</div>
+              <div className="rp-turn-label">{t('roleplay.yourTurn')}</div>
               <div className="rp-replies">
                 {replies.map((r) => (
                   <div key={r.italian} className="rp-reply">
                     <button type="button" className="rp-reply-main" onClick={() => answer(r)}>
                       <strong>{r.italian}</strong>
                       {showEnglish && <span>{r.english}</span>}
+                      {showEnglish && <Tr text={r.english} />}
                     </button>
                     <AudioButton text={r.italian} size="sm" />
                   </div>
@@ -230,16 +233,16 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && submitTyped()}
-                  placeholder="Type your answer in Italian…"
-                  aria-label="Type your answer"
+                  placeholder={t('roleplay.typePlaceholder')}
+                  aria-label={t('roleplay.typeLabel')}
                 />
-                <button type="button" className="btn" onClick={submitTyped} disabled={!typed.trim()}>Send</button>
+                <button type="button" className="btn" onClick={submitTyped} disabled={!typed.trim()}>{t('roleplay.send')}</button>
                 <button
                   type="button"
                   className={`rp-mic ${listening ? 'on' : ''}`}
                   onClick={() => (listening ? recRef.current?.stop() : listen())}
-                  aria-label={listening ? 'Stop listening' : 'Say your answer'}
-                  title={listening ? 'Listening… tap to stop' : 'Say your answer'}
+                  aria-label={listening ? t('roleplay.stopListening') : t('roleplay.sayAnswer')}
+                  title={listening ? t('roleplay.listening') : t('roleplay.sayAnswer')}
                 >
                   <Icon.Mic size={22} />
                 </button>
@@ -251,10 +254,10 @@ export function RoleplayBlock({ block }: { block: LessonBlock }) {
             <div className="rp-done">
               <span className="rp-done-icon">🎉</span>
               <div>
-                <strong>Bravo! You finished the conversation.</strong>
-                <p className="muted small">Try it again and choose different answers — or say them without looking.</p>
+                <strong>{t('roleplay.finished')}</strong>
+                <p className="muted small">{t('roleplay.finishedText')}</p>
               </div>
-              <button className="btn btn-sm" onClick={restart}><Icon.Refresh size={14} /> Again</button>
+              <button className="btn btn-sm" onClick={restart}><Icon.Refresh size={14} /> {t('roleplay.again')}</button>
             </div>
           )}
         </div>

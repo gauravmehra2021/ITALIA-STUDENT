@@ -71,7 +71,7 @@
 .tutor-card img { border-radius: 16px; flex: none; }
 .tutor-card svg { color: var(--muted); flex: none; }
 
-.news { padding-left: 12px; border-left: 3px solid var(--blue-100); }
+.news { padding-inline-start: 12px; border-inline-start: 3px solid var(--blue-100); }
 
 /* ── Catalogue ───────────────────────────────────────────────────────── */
 
@@ -87,12 +87,12 @@
 .course-cover::after {
   content: '';
   position: absolute;
-  left: 0; right: 0; bottom: 0;
+  inset-inline-start: 0; inset-inline-end: 0; bottom: 0;
   height: 5px;
   background: linear-gradient(90deg, #009246 33.3%, #fff 33.3% 66.6%, #ce2b37 66.6%);
 }
 .course-cover img { width: 96px; height: 96px; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25)); }
-.course-cover .badge { position: absolute; top: 12px; left: 12px; background: rgba(255, 255, 255, 0.92); }
+.course-cover .badge { position: absolute; top: 12px; inset-inline-start: 12px; background: rgba(255, 255, 255, 0.92); }
 .course-cover.cat-Work { background: linear-gradient(135deg, #00894a, #13a35d); }
 .course-cover.cat-Study { background: linear-gradient(135deg, #7a3cc8, #9b5de5); }
 .course-cover.cat-Visit { background: linear-gradient(135deg, #e07b00, #f5b400); }
@@ -135,7 +135,7 @@
   background: none;
   border: none;
   width: 100%;
-  text-align: left;
+  text-align: start;
   font: inherit;
   color: inherit;
 }
@@ -165,7 +165,7 @@ a.lesson-row:hover { border-color: var(--blue-500); transform: translateX(2px); 
 .lesson-row.locked { opacity: 0.6; background: var(--surface-2); }
 .lesson-row.next { border-color: var(--green-500); box-shadow: 0 0 0 4px var(--green-100); }
 .lesson-icon { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; flex: none; position: relative; }
-.lesson-icon .done-tick { position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%; background: var(--green-600); color: #fff; display: grid; place-items: center; border: 2px solid #fff; }
+.lesson-icon .done-tick { position: absolute; inset-inline-end: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%; background: var(--green-600); color: #fff; display: grid; place-items: center; border: 2px solid #fff; }
 .lesson-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .lesson-text strong { font-size: 0.98rem; }
 .lesson-text span { font-size: 0.82rem; color: var(--muted); }
@@ -174,7 +174,7 @@ a.lesson-row:hover { border-color: var(--blue-500); transform: translateX(2px); 
 .unit-aside { display: flex; flex-direction: column; gap: 12px; }
 .aside-box { padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .aside-box h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-.aside-box ul { margin: 0; padding-left: 1.1em; font-size: 0.88rem; color: var(--ink-2); display: grid; gap: 4px; }
+.aside-box ul { margin: 0; padding-inline-start: 1.1em; font-size: 0.88rem; color: var(--ink-2); display: grid; gap: 4px; }
 .aside-box p { font-size: 0.88rem; color: var(--ink-2); }
 
 .enroll-bar {
@@ -220,8 +220,8 @@ a.lesson-row:hover { border-color: var(--blue-500); transform: translateX(2px); 
 .chat { display: flex; flex-direction: column; height: calc(100vh - 200px); min-height: 480px; }
 .chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 20px; }
 .bubble { max-width: 78%; padding: 12px 16px; border-radius: 18px; white-space: pre-wrap; }
-.bubble.me { align-self: flex-end; background: var(--blue-700); color: #fff; border-bottom-right-radius: 6px; }
-.bubble.bot { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-bottom-left-radius: 6px; }
+.bubble.me { align-self: flex-end; background: var(--blue-700); color: #fff; border-end-end-radius: 6px; }
+.bubble.bot { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--line); border-end-start-radius: 6px; }
 .chat-form { display: flex; gap: 10px; padding: 14px; border-top: 1px solid var(--line); }
 .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .mode-tabs button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; color: var(--ink-2); cursor: pointer; }

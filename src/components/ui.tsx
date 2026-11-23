@@ -2,16 +2,18 @@ import { useState, type ReactNode } from 'react';
 import { Icon } from './Icons';
 import { speak } from '../lib/speech';
 import { mediaUrl } from '../lib/media';
+import { useI18n } from '../i18n';
 import type { LessonKind } from '../types';
 
 export function Logo({ size = 40, withText = true, light = false }: { size?: number; withText?: boolean; light?: boolean }) {
+  const { t } = useI18n();
   return (
     <span className="logo" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
       <img src="/images/logo-256.png" alt="SS Europa" width={size} height={size} style={{ borderRadius: '50%', background: '#fff' }} />
       {withText && (
         <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
           <strong style={{ fontSize: 17, letterSpacing: '-0.01em', color: light ? '#fff' : 'var(--blue-800)' }}>SS Europa</strong>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: light ? 'rgba(255,255,255,0.75)' : 'var(--muted)' }}>Italian Academy</span>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: light ? 'rgba(255,255,255,0.75)' : 'var(--muted)' }}>{t('common.academy')}</span>
         </span>
       )}
     </span>
@@ -19,8 +21,9 @@ export function Logo({ size = 40, withText = true, light = false }: { size?: num
 }
 
 export function Stars({ value, max = 3, size = 16 }: { value: number; max?: number; size?: number }) {
+  const { t } = useI18n();
   return (
-    <span className="stars" aria-label={`${value} of ${max} stars`}>
+    <span className="stars" aria-label={t('common.stars', { value, max })}>
       {Array.from({ length: max }, (_, i) => (
         <Icon.Star key={i} size={size} className={i < value ? 'on' : 'off'} />
       ))}
@@ -55,24 +58,26 @@ export function ProgressRing({ value, size = 64, stroke = 7, children }: { value
   );
 }
 
-export function Loading({ label = 'Loading…' }: { label?: string }) {
+export function Loading({ label }: { label?: string }) {
+  const { t } = useI18n();
   return (
     <div className="state" role="status">
       <div className="spinner" />
-      <span>{label}</span>
+      <span>{label ?? t('common.loading')}</span>
     </div>
   );
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="state" role="alert">
       <div style={{ fontSize: 40 }}>😕</div>
-      <strong style={{ color: 'var(--ink)' }}>Something went wrong</strong>
+      <strong style={{ color: 'var(--ink)' }}>{t('common.somethingWrong')}</strong>
       <span>{message}</span>
       {onRetry && (
         <button className="btn btn-sm" onClick={onRetry}>
-          <Icon.Refresh size={16} /> Try again
+          <Icon.Refresh size={16} /> {t('common.tryAgain')}
         </button>
       )}
     </div>
@@ -101,14 +106,15 @@ export function Illustration({ src, size = 56, alt = '', tint = 'var(--blue-50)'
 
 export function AudioButton({ text, audioUrl, size = 'md', label }: { text: string; audioUrl?: string | null; size?: 'sm' | 'md' | 'lg'; label?: string }) {
   const [playing, setPlaying] = useState(false);
+  const { t } = useI18n();
   const dims = size === 'lg' ? 72 : size === 'sm' ? 32 : 40;
   return (
     <button
       type="button"
       className={`audio-btn audio-${size} ${playing ? 'is-playing' : ''}`}
       style={{ width: dims, height: dims }}
-      aria-label={label ?? `Listen: ${text}`}
-      title="Listen"
+      aria-label={label ?? t('common.listenTo', { text })}
+      title={t('common.listen')}
       onClick={async (e) => {
         e.stopPropagation();
         setPlaying(true);

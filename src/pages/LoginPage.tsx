@@ -4,12 +4,31 @@ import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../services/api';
 import { Logo } from '../components/ui';
 import { Icon } from '../components/Icons';
+import { apiFromCode, useI18n } from '../i18n';
+import { LanguageSelect } from '../i18n/LanguagePicker';
 import './login.css';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'otp';
 
+const TITLE: Record<Mode, string> = {
+  login: 'login.titleLogin',
+  register: 'login.titleRegister',
+  forgot: 'login.titleForgot',
+  reset: 'login.titleReset',
+  otp: 'login.titleOtp',
+};
+
+const SUBTITLE: Record<Mode, string> = {
+  login: 'login.subLogin',
+  register: 'login.subRegister',
+  forgot: 'login.subForgot',
+  reset: 'login.subReset',
+  otp: 'login.subOtp',
+};
+
 export function LoginPage() {
   const { user, login, register, verifyOtp } = useAuth();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -38,7 +57,7 @@ export function LoginPage() {
     try {
       await action();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
+      setError(e instanceof Error ? e.message : t('login.error'));
     } finally {
       setBusy(false);
     }
@@ -51,7 +70,7 @@ export function LoginPage() {
       if (res.requiresOtp && res.pendingUserId) {
         setPendingUserId(res.pendingUserId);
         go('otp');
-        setInfo('We sent a 6-digit code to your email.');
+        setInfo(t('login.otpSent'));
         return;
       }
       navigate('/');
@@ -61,7 +80,7 @@ export function LoginPage() {
   const onRegister = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      await register({ email, password, firstName: firstName.trim(), lastName: lastName.trim() });
+      await register({ email, password, firstName: firstName.trim(), lastName: lastName.trim(), preferredLanguage: apiFromCode(lang) });
       navigate('/courses');
     });
   };
@@ -72,7 +91,7 @@ export function LoginPage() {
       const res = await authApi.forgotPassword(email.trim());
       setChallengeId(res.challengeId);
       go('reset');
-      setInfo('If this email has an account, we sent a 6-digit code to it.');
+      setInfo(t('login.resetSent'));
     });
   };
 
@@ -83,7 +102,7 @@ export function LoginPage() {
       await authApi.resetPassword({ challengeId, code: code.trim(), newPassword: password });
       go('login');
       setCode('');
-      setInfo('Your password has been changed. You can sign in now.');
+      setInfo(t('login.pwChanged'));
     });
   };
 
@@ -96,25 +115,9 @@ export function LoginPage() {
     });
   };
 
-  const title = {
-    login: 'Welcome back',
-    register: 'Create your free account',
-    forgot: 'Forgot your password?',
-    reset: 'Choose a new password',
-    otp: 'Check your email',
-  }[mode];
-
-  const subtitle = {
-    login: 'Sign in to continue learning Italian.',
-    register: 'Start learning Italian today — it takes one minute.',
-    forgot: 'Enter your email and we\'ll send you a code to reset it.',
-    reset: 'Enter the code from the email and your new password.',
-    otp: 'Enter the 6-digit code we sent you.',
-  }[mode];
-
-  const passwordField = (label: string, autoComplete: string) => (
+  const passwordField = (labelKey: string, autoComplete: string) => (
     <div className="field">
-      <label htmlFor="password">{label}</label>
+      <label htmlFor="password">{t(labelKey)}</label>
       <div className="password-wrap">
         <input
           id="password"
@@ -125,12 +128,26 @@ export function LoginPage() {
           required
           minLength={mode === 'login' ? undefined : 8}
           autoComplete={autoComplete}
-          placeholder={mode === 'login' ? 'Your password' : 'At least 8 characters'}
+          placeholder={mode === 'login' ? t('login.yourPassword') : t('login.minChars')}
         />
-        <button type="button" className="password-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+        <button type="button" className="password-toggle" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}>
           <Icon.Eye size={18} />
         </button>
       </div>
+    </div>
+  );
+
+  const emailField = (autoComplete = 'email', placeholder = 'you@example.com') => (
+    <div className="field">
+      <label htmlFor="email">{t('login.email')}</label>
+      <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete={autoComplete} placeholder={placeholder} />
+    </div>
+  );
+
+  const codeField = (
+    <div className="field">
+      <label htmlFor="code">{t('login.code')}</label>
+      <input id="code" className="input code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required autoComplete="one-time-code" />
     </div>
   );
 
@@ -141,32 +158,33 @@ export function LoginPage() {
         <div className="auth-hero-content">
           <Logo size={56} light />
           <div>
-            <h1>Learn the Italian you need for life in Italy.</h1>
-            <p>Short lessons with pictures and audio, live classes with real teachers, and a course built for work, study and everyday life.</p>
+            <h1>{t('login.heroTitle')}</h1>
+            <p>{t('login.heroText')}</p>
           </div>
           <ul className="auth-points">
-            <li><span>📸</span> Words with pictures & native audio</li>
-            <li><span>🎥</span> Weekly live speaking classes</li>
-            <li><span>🏅</span> Prepare for the CILS A1 & A2 exams</li>
+            <li><span>📸</span> {t('login.point1')}</li>
+            <li><span>🎥</span> {t('login.point2')}</li>
+            <li><span>🏅</span> {t('login.point3')}</li>
           </ul>
           <div className="auth-flag"><span /><span /><span /></div>
         </div>
       </section>
 
       <section className="auth-panel">
+        <div className="auth-lang"><LanguageSelect /></div>
         <div className="auth-card">
           <div className="auth-mobile-logo"><Logo size={48} /></div>
 
           {(mode === 'login' || mode === 'register') && (
             <div className="auth-tabs" role="tablist">
-              <button role="tab" aria-selected={mode === 'login'} className={mode === 'login' ? 'active' : ''} onClick={() => go('login')}>Sign in</button>
-              <button role="tab" aria-selected={mode === 'register'} className={mode === 'register' ? 'active' : ''} onClick={() => go('register')}>Create account</button>
+              <button role="tab" aria-selected={mode === 'login'} className={mode === 'login' ? 'active' : ''} onClick={() => go('login')}>{t('login.signIn')}</button>
+              <button role="tab" aria-selected={mode === 'register'} className={mode === 'register' ? 'active' : ''} onClick={() => go('register')}>{t('login.createAccount')}</button>
             </div>
           )}
 
           <div className="auth-head">
-            <h2>{title}</h2>
-            <p>{subtitle}</p>
+            <h2>{t(TITLE[mode])}</h2>
+            <p>{t(SUBTITLE[mode])}</p>
           </div>
 
           {error && <div className="alert alert-error" role="alert">{error}</div>}
@@ -174,13 +192,10 @@ export function LoginPage() {
 
           {mode === 'login' && (
             <form onSubmit={onLogin} className="stack">
-              <div className="field">
-                <label htmlFor="email">Email</label>
-                <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
-              </div>
-              {passwordField('Password', 'current-password')}
-              <button type="button" className="link-btn" onClick={() => go('forgot')}>Forgot password?</button>
-              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+              {emailField()}
+              {passwordField('login.password', 'current-password')}
+              <button type="button" className="link-btn" onClick={() => go('forgot')}>{t('login.forgot')}</button>
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? t('login.signingIn') : t('login.signIn')}</button>
             </form>
           )}
 
@@ -188,55 +203,43 @@ export function LoginPage() {
             <form onSubmit={onRegister} className="stack">
               <div className="auth-row">
                 <div className="field">
-                  <label htmlFor="first">First name</label>
+                  <label htmlFor="first">{t('login.firstName')}</label>
                   <input id="first" className="input" value={firstName} onChange={(e) => setFirstName(e.target.value)} required autoComplete="given-name" />
                 </div>
                 <div className="field">
-                  <label htmlFor="last">Surname</label>
+                  <label htmlFor="last">{t('login.surname')}</label>
                   <input id="last" className="input" value={lastName} onChange={(e) => setLastName(e.target.value)} required autoComplete="family-name" />
                 </div>
               </div>
-              <div className="field">
-                <label htmlFor="email">Email</label>
-                <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
-              </div>
-              {passwordField('Password', 'new-password')}
-              <button className="btn btn-success btn-lg btn-block" disabled={busy}>{busy ? 'Creating your account…' : 'Create account'}</button>
-              <p className="muted small" style={{ textAlign: 'center' }}>The same account works on the website and in the SS Europa app.</p>
+              {emailField()}
+              {passwordField('login.password', 'new-password')}
+              <button className="btn btn-success btn-lg btn-block" disabled={busy}>{busy ? t('login.creating') : t('login.createAccount')}</button>
+              <p className="muted small" style={{ textAlign: 'center' }}>{t('login.sameAccount')}</p>
             </form>
           )}
 
           {mode === 'forgot' && (
             <form onSubmit={onForgot} className="stack">
-              <div className="field">
-                <label htmlFor="email">Email</label>
-                <input id="email" className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-              </div>
-              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Sending…' : 'Send code'}</button>
-              <button type="button" className="link-btn center" onClick={() => go('login')}>← Back to sign in</button>
+              {emailField('email', '')}
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? t('login.sending') : t('login.sendCode')}</button>
+              <button type="button" className="link-btn center" onClick={() => go('login')}>{t('login.back')}</button>
             </form>
           )}
 
           {mode === 'reset' && (
             <form onSubmit={onReset} className="stack">
-              <div className="field">
-                <label htmlFor="code">6-digit code</label>
-                <input id="code" className="input code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required autoComplete="one-time-code" />
-              </div>
-              {passwordField('New password', 'new-password')}
-              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Saving…' : 'Change password'}</button>
-              <button type="button" className="link-btn center" onClick={() => go('login')}>← Back to sign in</button>
+              {codeField}
+              {passwordField('login.newPassword', 'new-password')}
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? t('login.savingPw') : t('login.changePassword')}</button>
+              <button type="button" className="link-btn center" onClick={() => go('login')}>{t('login.back')}</button>
             </form>
           )}
 
           {mode === 'otp' && (
             <form onSubmit={onOtp} className="stack">
-              <div className="field">
-                <label htmlFor="code">6-digit code</label>
-                <input id="code" className="input code-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required autoComplete="one-time-code" />
-              </div>
-              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Checking…' : 'Verify and continue'}</button>
-              <button type="button" className="link-btn center" onClick={() => go('login')}>← Back to sign in</button>
+              {codeField}
+              <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? t('login.checking') : t('login.verify')}</button>
+              <button type="button" className="link-btn center" onClick={() => go('login')}>{t('login.back')}</button>
             </form>
           )}
         </div>

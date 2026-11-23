@@ -3,6 +3,8 @@ import { mediaUrl } from '../lib/media';
 import { speak } from '../lib/speech';
 import { AudioButton } from './ui';
 import { Icon } from './Icons';
+import { useI18n, useTc } from '../i18n';
+import { Tr } from '../i18n/content';
 import type { Exercise } from '../types';
 
 /** Called once per exercise: whether it was answered correctly on the first try. */
@@ -22,8 +24,12 @@ export function ExerciseView({ exercise, onAnswered, answered }: { exercise: Exe
 // ── Multiple choice (listen & pick, picture → word, translation, fill the gap, true/false) ──
 
 function Choice({ exercise, onAnswered, answered }: { exercise: Exercise; onAnswered: OnAnswered; answered: boolean }) {
+  const { t } = useI18n();
+  const tc = useTc();
   const [picked, setPicked] = useState<number | null>(null);
   const isListen = exercise.type === 'ListenPick';
+  // Options are English meanings in "What does it mean?" questions: show their translation too.
+  const englishOptions = exercise.type === 'PickTranslation' && /What does it mean\?$/.test(exercise.prompt);
   const imageOptions = exercise.options.some((o) => o.imageUrl);
   const correctText = exercise.options[exercise.correctIndex]?.text ?? '';
 
@@ -66,12 +72,13 @@ function Choice({ exercise, onAnswered, answered }: { exercise: Exercise; onAnsw
 
   return (
     <div className="ex">
-      <h2 className="ex-prompt">{exercise.prompt}</h2>
+      <h2 className="ex-prompt">{tc(exercise.prompt)}</h2>
+      <PromptTr prompt={exercise.prompt} />
 
       {isListen && (
         <div className="ex-listen">
-          <AudioButton text={exercise.italian ?? ''} size="lg" label="Play the word again" />
-          <button className="btn btn-sm btn-ghost" onClick={() => void speak(exercise.italian ?? '', { slow: true })}><Icon.Turtle size={18} /> Slower</button>
+          <AudioButton text={exercise.italian ?? ''} size="lg" label={t('ex.playAgain')} />
+          <button className="btn btn-sm btn-ghost" onClick={() => void speak(exercise.italian ?? '', { slow: true })}><Icon.Turtle size={18} /> {t('ex.slower')}</button>
         </div>
       )}
 
@@ -113,7 +120,7 @@ function Choice({ exercise, onAnswered, answered }: { exercise: Exercise; onAnsw
             ) : (
               <>
                 <span className="opt-key">{i + 1}</span>
-                <span className="opt-text">{o.text}</span>
+                <span className="opt-text">{o.text}{englishOptions && <Tr text={o.text} />}</span>
               </>
             )}
           </button>
@@ -121,6 +128,15 @@ function Choice({ exercise, onAnswered, answered }: { exercise: Exercise; onAnsw
       </div>
     </div>
   );
+}
+
+/**
+ * Under a prompt: the translation of a custom question, or of the English sentence inside
+ * a standard one (True or false? (…) / Put the words in order: "…").
+ */
+function PromptTr({ prompt }: { prompt: string }) {
+  const inner = /True or false\? \((.+)\)$/s.exec(prompt)?.[1] ?? /Put the words in order: "(.+)"$/s.exec(prompt)?.[1];
+  return <Tr text={inner ?? prompt} block className="ex-prompt-tr" />;
 }
 
 // ── Match pairs ───────────────────────────────────────────────────────────
@@ -138,6 +154,8 @@ function shuffled<T>(list: T[], seed: string): T[] {
 }
 
 function MatchPairs({ exercise, onAnswered }: { exercise: Exercise; onAnswered: OnAnswered }) {
+  const { t } = useI18n();
+  const tc = useTc();
   const left = useMemo(() => shuffled(exercise.pairs.map((p) => p.left), exercise.id + 'L'), [exercise]);
   const right = useMemo(() => shuffled(exercise.pairs.map((p) => p.right), exercise.id + 'R'), [exercise]);
   const [selLeft, setSelLeft] = useState<string | null>(null);
@@ -166,7 +184,7 @@ function MatchPairs({ exercise, onAnswered }: { exercise: Exercise; onAnswered: 
 
   return (
     <div className="ex">
-      <h2 className="ex-prompt">{exercise.prompt}</h2>
+      <h2 className="ex-prompt">{tc(exercise.prompt)}</h2>
       <div className="match">
         <div className="match-col">
           {left.map((l) => (
@@ -194,11 +212,12 @@ function MatchPairs({ exercise, onAnswered }: { exercise: Exercise; onAnswered: 
               onClick={() => setSelRight(r)}
             >
               {r}
+              {!r.includes(' · ') && <Tr text={r} />}
             </button>
           ))}
         </div>
       </div>
-      <p className="muted small" style={{ textAlign: 'center' }}>Tap an Italian word, then its meaning.</p>
+      <p className="muted small" style={{ textAlign: 'center' }}>{t('ex.matchHint')}</p>
     </div>
   );
 }
@@ -208,6 +227,8 @@ function MatchPairs({ exercise, onAnswered }: { exercise: Exercise; onAnswered: 
 const normalize = (s: string) => s.toLowerCase().replace(/[.,!?;:¿¡"«»]/g, '').replace(/\s+/g, ' ').trim();
 
 function WordOrder({ exercise, onAnswered, answered }: { exercise: Exercise; onAnswered: OnAnswered; answered: boolean }) {
+  const { t } = useI18n();
+  const tc = useTc();
   const answer = exercise.answer ?? '';
   const tokens = useMemo(() => {
     const words = answer.split(/\s+/).filter(Boolean).map((w, i) => ({ id: i, w }));
@@ -230,9 +251,10 @@ function WordOrder({ exercise, onAnswered, answered }: { exercise: Exercise; onA
 
   return (
     <div className="ex">
-      <h2 className="ex-prompt">{exercise.prompt}</h2>
+      <h2 className="ex-prompt">{tc(exercise.prompt)}</h2>
+      <PromptTr prompt={exercise.prompt} />
       <div className={`wo-answer ${result === 'ok' ? 'ok' : result === 'bad' ? 'bad' : ''}`}>
-        {chosen.length === 0 && <span className="muted">Tap the words below…</span>}
+        {chosen.length === 0 && <span className="muted">{t('ex.tapWords')}</span>}
         {chosen.map((id) => (
           <button key={id} type="button" className="wo-token" disabled={answered} onClick={() => setChosen((c) => c.filter((x) => x !== id))}>
             {tokens.find((t) => t.id === id)!.w}
@@ -248,7 +270,7 @@ function WordOrder({ exercise, onAnswered, answered }: { exercise: Exercise; onA
         ))}
       </div>
       {!answered && (
-        <button className="btn btn-primary btn-lg ex-check" disabled={chosen.length !== tokens.length} onClick={check}>Check</button>
+        <button className="btn btn-primary btn-lg ex-check" disabled={chosen.length !== tokens.length} onClick={check}>{t('ex.check')}</button>
       )}
     </div>
   );

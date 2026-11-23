@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LearnerProvider, useLearner } from '../hooks/useLearner';
+import { useI18n } from '../i18n';
+import { LanguageSelect } from '../i18n/LanguagePicker';
 import { Icon } from '../components/Icons';
 import { Logo } from '../components/ui';
 import './layout.css';
 
 const NAV = [
-  { to: '/', label: 'Home', icon: Icon.Home, end: true },
-  { to: '/courses', label: 'Courses', icon: Icon.Book },
-  { to: '/live-classes', label: 'Live classes', icon: Icon.Video },
-  { to: '/progress', label: 'Progress', icon: Icon.Chart },
-  { to: '/tutor', label: 'AI tutor', icon: Icon.Sparkles },
-  { to: '/notifications', label: 'Notifications', icon: Icon.Bell },
+  { to: '/', key: 'nav.home', short: 'nav.home', icon: Icon.Home, end: true },
+  { to: '/courses', key: 'nav.courses', short: 'nav.courses', icon: Icon.Book },
+  { to: '/live-classes', key: 'nav.live', short: 'nav.liveShort', icon: Icon.Video },
+  { to: '/progress', key: 'nav.progress', short: 'nav.progress', icon: Icon.Chart },
+  { to: '/tutor', key: 'nav.tutor', short: 'nav.tutor', icon: Icon.Sparkles },
+  { to: '/notifications', key: 'nav.notifications', short: 'nav.notificationsShort', icon: Icon.Bell },
 ];
 
 const MOBILE_NAV = NAV.filter((n) => n.to !== '/tutor');
@@ -28,6 +30,7 @@ export function StudentLayout() {
 function Shell() {
   const { user, logout } = useAuth();
   const { summary } = useLearner();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,15 +62,15 @@ function Shell() {
 
   return (
     <div className="shell">
-      <aside className="sidebar" aria-label="Main navigation">
+      <aside className="sidebar" aria-label={t('nav.mainNav')}>
         <div className="sidebar-brand">
           <Logo size={42} />
         </div>
         <nav className="sidebar-nav">
-          {NAV.map(({ to, label, icon: I, end }) => (
+          {NAV.map(({ to, key, icon: I, end }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <I size={20} />
-              <span>{label}</span>
+              <span>{t(key)}</span>
             </NavLink>
           ))}
         </nav>
@@ -75,16 +78,16 @@ function Shell() {
           <div className="sidebar-card-flag" aria-hidden>
             <span /><span /><span />
           </div>
-          <strong>Learn every day</strong>
-          <p>10 minutes a day is enough to keep your streak and remember new words.</p>
+          <strong>{t('nav.learnEveryDay')}</strong>
+          <p>{t('nav.learnEveryDayText')}</p>
         </div>
         <div className="sidebar-user">
           <div className="avatar">{initials}</div>
           <div className="sidebar-user-meta">
-            <strong>{user?.fullName || 'Student'}</strong>
+            <strong>{user?.fullName || t('common.student')}</strong>
             <span>{user?.email}</span>
           </div>
-          <button className="icon-btn" onClick={onLogout} title="Sign out" aria-label="Sign out">
+          <button className="icon-btn" onClick={onLogout} title={t('nav.signOut')} aria-label={t('nav.signOut')}>
             <Icon.Logout size={18} />
           </button>
         </div>
@@ -97,20 +100,21 @@ function Shell() {
             <strong>SS Europa</strong>
           </div>
           <div className="topbar-stats">
-            <span className="stat-chip streak" title="Day streak">
+            <span className="stat-chip streak" title={t('home.statStreak')}>
               <Icon.Flame size={18} /> {summary?.streakDays ?? 0}
-              <span className="stat-chip-label">day streak</span>
+              <span className="stat-chip-label">{t('nav.dayStreak')}</span>
             </span>
-            <span className="stat-chip xp" title="Total XP">
+            <span className="stat-chip xp" title={t('nav.totalXp')}>
               <Icon.Bolt size={18} /> {summary?.totalXp ?? 0}
-              <span className="stat-chip-label">XP</span>
+              <span className="stat-chip-label">{t('nav.xp')}</span>
             </span>
-            <span className="stat-chip stars-chip" title="Stars earned">
+            <span className="stat-chip stars-chip" title={t('nav.starsEarned')}>
               <Icon.Star size={18} /> {summary?.starsEarned ?? 0}
             </span>
           </div>
           <div className="topbar-user">
-            <button className="avatar avatar-btn" onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-label="Account menu">
+            <LanguageSelect className="topbar-lang" />
+            <button className="avatar avatar-btn" onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-label={t('nav.accountMenu')}>
               {initials}
             </button>
             {menuOpen && (
@@ -119,9 +123,10 @@ function Shell() {
                   <strong>{user?.fullName}</strong>
                   <span>{user?.email}</span>
                 </div>
-                <NavLink to="/tutor" className="user-menu-item" role="menuitem"><Icon.Sparkles size={18} /> AI tutor</NavLink>
-                <NavLink to="/progress" className="user-menu-item" role="menuitem"><Icon.Chart size={18} /> My progress</NavLink>
-                <button className="user-menu-item danger" role="menuitem" onClick={onLogout}><Icon.Logout size={18} /> Sign out</button>
+                <LanguageSelect className="in-menu" />
+                <NavLink to="/tutor" className="user-menu-item" role="menuitem"><Icon.Sparkles size={18} /> {t('nav.tutor')}</NavLink>
+                <NavLink to="/progress" className="user-menu-item" role="menuitem"><Icon.Chart size={18} /> {t('nav.myProgress')}</NavLink>
+                <button className="user-menu-item danger" role="menuitem" onClick={onLogout}><Icon.Logout size={18} /> {t('nav.signOut')}</button>
               </div>
             )}
           </div>
@@ -132,11 +137,11 @@ function Shell() {
         </main>
       </div>
 
-      <nav className="tabbar" aria-label="Main navigation">
-        {MOBILE_NAV.map(({ to, label, icon: I, end }) => (
+      <nav className="tabbar" aria-label={t('nav.mainNav')}>
+        {MOBILE_NAV.map(({ to, short, icon: I, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}>
             <I size={22} />
-            <span>{label === 'Live classes' ? 'Live' : label === 'Notifications' ? 'Alerts' : label}</span>
+            <span>{t(short)}</span>
           </NavLink>
         ))}
       </nav>

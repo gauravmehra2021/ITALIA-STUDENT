@@ -74,6 +74,14 @@ const deviceName = () => `Student web · ${navigator.userAgent.slice(0, 60)}`;
 /** Fired when the session expires so the app can return to the login page. */
 export const SESSION_EXPIRED_EVENT = 'sseuropa:session-expired';
 
+/** Messages for errors that happen before the server answers (set by the language provider). */
+const messages = {
+  network: 'Cannot reach the server. Check your internet connection and try again.',
+};
+export function setApiMessages(m: Partial<typeof messages>) {
+  Object.assign(messages, m);
+}
+
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
     super(message);
@@ -91,7 +99,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch {
-    throw new ApiError('Cannot reach the server. Check your internet connection and try again.', 0);
+    throw new ApiError(messages.network, 0);
   }
 
   const isJson = (res.headers.get('content-type') || '').includes('application/json');
@@ -119,13 +127,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 const post = <T>(path: string, body?: unknown) =>
   request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) });
 
+const put = <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
+
 // ── Auth ────────────────────────────────────────────────────────────────────
 
 export const authApi = {
   login: (email: string, password: string) =>
     post<AuthResponse>('/api/auth/login', { email, password, deviceId: deviceId(), deviceName: deviceName() }),
-  register: (payload: { email: string; password: string; firstName: string; lastName: string }) =>
-    post<User>('/api/auth/register', { ...payload, preferredLanguage: 'English' }),
+  register: (payload: { email: string; password: string; firstName: string; lastName: string; preferredLanguage?: string }) =>
+    post<User>('/api/auth/register', { ...payload, preferredLanguage: payload.preferredLanguage ?? 'English' }),
   verifyOtp: (userId: string, code: string) =>
     post<AuthResponse>('/api/auth/verify-otp', { userId, code, deviceId: deviceId(), deviceName: deviceName() }),
   forgotPassword: (email: string) => post<{ challengeId: string; expiresAt: string }>('/api/auth/forgot-password', { email }),
@@ -138,6 +148,11 @@ export const authApi = {
 
 export const learnApi = {
   me: () => request<LearnerSummary>('/api/learn/me'),
+  /** Saves the portal language on the profile: 'English' | 'Punjabi' | 'Hindi' | 'Urdu'. */
+  setLanguage: (language: string) => put<string>('/api/learn/me/language', { language }),
+  /** Punjabi / Hindi / Urdu translations of English content texts: { text: translation }. */
+  translations: (language: string, texts: string[]) =>
+    post<Record<string, string>>('/api/learn/translations', { language, texts }),
   courses: () => request<CourseCard[]>('/api/learn/courses'),
   course: (id: string) => request<CourseOutline>(`/api/learn/courses/${id}`),
   enroll: (id: string) => post<CourseOutline>(`/api/learn/courses/${id}/enroll`),
@@ -163,6 +178,6 @@ export const announcementsApi = {
 };
 
 export const aiApi = {
-  ask: (mode: 'tutor' | 'translator' | 'conversation' | 'practice', prompt: string) =>
-    post<AiResponse>('/api/ai', { mode, prompt, sourceLanguage: 'English', targetLanguage: 'Italian' }),
+  ask: (mode: 'tutor' | 'translator' | 'conversation' | 'practice', prompt: string, sourceLanguage = 'English') =>
+    post<AiResponse>('/api/ai', { mode, prompt, sourceLanguage, targetLanguage: 'Italian' }),
 };
