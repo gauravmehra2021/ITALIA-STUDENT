@@ -6,6 +6,7 @@ import { Logo } from '../components/ui';
 import { Icon } from '../components/Icons';
 import { apiFromCode, useI18n } from '../i18n';
 import { LanguageSelect } from '../i18n/LanguagePicker';
+import { rememberTemporaryPassword } from './ChangePasswordPage';
 import './login.css';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'otp';
@@ -67,6 +68,9 @@ export function LoginPage() {
     e.preventDefault();
     void run(async () => {
       const res = await login(email, password);
+      // Signed in with a temporary password from the team: keep it in memory so the
+      // "choose your own password" screen doesn't ask for it again.
+      if (res.user?.mustChangePassword) rememberTemporaryPassword(password);
       if (res.requiresOtp && res.pendingUserId) {
         setPendingUserId(res.pendingUserId);
         go('otp');

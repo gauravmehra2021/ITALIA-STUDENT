@@ -10,6 +10,8 @@ export interface User {
   status: string;
   preferredLanguage: string;
   emailVerified: boolean;
+  /** Signed in with a temporary password from the team: must choose their own first. */
+  mustChangePassword?: boolean;
 }
 
 export interface AuthResponse {

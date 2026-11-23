@@ -58,7 +58,7 @@ export function CoursesPage() {
       </div>
       {filter !== 'All' && <p className="muted" style={{ marginTop: -8 }}>{t(`courses.${active.key}Help`)}</p>}
 
-      {data.length === 0 && <Empty icon="📚" title={t('courses.noCourses')}>{t('courses.comingSoon')}</Empty>}
+      {data.length === 0 && <Empty icon="🧑‍🏫" title={t('courses.waitTitle')}>{t('courses.waitText')}</Empty>}
 
       {mine.length > 0 && (
         <section>

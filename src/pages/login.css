@@ -124,3 +124,7 @@
 @media (max-width: 900px) {
   .auth-lang { position: static; align-self: flex-end; }
 }
+
+/* First sign-in with a temporary password: one centred card, no hero picture. */
+.auth.auth-single { grid-template-columns: 1fr; background: var(--bg); }
+.auth-single .auth-mobile-logo { justify-content: center; }

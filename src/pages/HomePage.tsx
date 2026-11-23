@@ -28,18 +28,20 @@ export function HomePage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const { data, error, loading, reload } = useAsync(async () => {
-    const [summary, classes, notes] = await Promise.all([
+    const [summary, classes, notes, available] = await Promise.all([
       learnApi.me(),
       classesApi.list().catch(() => [] as ClassSession[]),
       announcementsApi.list().catch(() => [] as Announcement[]),
+      // Courses this student may open (their batch's courses). Empty = not placed in a batch yet.
+      learnApi.courses().then((c) => c.length).catch(() => 1),
     ]);
-    return { summary, classes, notes };
+    return { summary, classes, notes, available };
   });
 
   if (loading && !data) return <Loading label={t('home.loading')} />;
   if (error || !data) return <ErrorState message={error ?? t('home.loadError')} onRetry={reload} />;
 
-  const { summary, classes, notes } = data;
+  const { summary, classes, notes, available } = data;
   const enrolledIds = new Set(summary.myCourses.map((c) => c.course.id));
   const nextClass = classes
     .filter((c) => enrolledIds.has(c.courseId) && new Date(c.scheduledAtUtc).getTime() > Date.now() - c.durationMinutes * 60000 && c.status !== 'Cancelled')
@@ -60,6 +62,14 @@ export function HomePage() {
         <div className="stack">
           {summary.continueCourse ? (
             <ContinueCard summary={summary} />
+          ) : available === 0 ? (
+            <div className="card card-pad start-card">
+              <div className="start-card-art">🧑‍🏫</div>
+              <div className="stack" style={{ gap: 10 }}>
+                <h2>{t('courses.waitTitle')}</h2>
+                <p className="muted">{t('courses.waitText')}</p>
+              </div>
+            </div>
           ) : (
             <div className="card card-pad start-card">
               <div className="start-card-art">🇮🇹</div>

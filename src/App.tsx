@@ -13,10 +13,13 @@ import { LiveClassesPage } from './pages/LiveClassesPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { TutorPage } from './pages/TutorPage';
+import { ChangePasswordPage } from './pages/ChangePasswordPage';
 
 function Protected({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+  // Account made by the team: the student chooses their own password before anything else.
+  if (user.mustChangePassword) return <ChangePasswordPage />;
   return <>{children}</>;
 }
 

@@ -141,6 +141,8 @@ export const authApi = {
   forgotPassword: (email: string) => post<{ challengeId: string; expiresAt: string }>('/api/auth/forgot-password', { email }),
   resetPassword: (payload: { challengeId: string; code: string; newPassword: string }) =>
     post<void>('/api/auth/reset-password', payload),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    post<User>('/api/auth/change-password', { currentPassword, newPassword }),
   logout: () => post<void>('/api/auth/logout').finally(clearStoredAuth),
 };
 
