@@ -8,7 +8,7 @@ import { ErrorState, Illustration, KIND_META, Loading, ProgressBar, ProgressRing
 import { Icon } from '../components/Icons';
 import { useI18n } from '../i18n';
 import { Tr } from '../i18n/content';
-import type { CourseOutline, LessonSummary, Unit } from '../types';
+import type { CourseOutline, LessonSummary, Module, Unit } from '../types';
 import './pages.css';
 
 export function CoursePage() {
@@ -122,8 +122,15 @@ export function CoursePage() {
 
 function UnitCard({ unit, outline, open, onToggle }: { unit: Unit; outline: CourseOutline; open: boolean; onToggle: () => void }) {
   const { t } = useI18n();
-  const percent = unit.lessons.length ? Math.round((unit.completedLessons / unit.lessons.length) * 100) : 0;
+  const countable = unit.lessons.filter((l) => !l.videoPending).length;
+  const percent = countable ? Math.round((unit.completedLessons / countable) * 100) : 0;
   const pdf = mediaUrl(unit.pdfUrl);
+  const modules = unit.modules ?? [];
+  // The module shown under the cards: the one with the next lesson, else the first open one.
+  const defaultModule = modules.find((m) => m.lessons.some((l) => l.id === outline.nextLessonId))
+    ?? modules.find((m) => !m.locked) ?? modules[0];
+  const [selected, setSelected] = useState<string | undefined>(defaultModule?.id);
+  const current = modules.find((m) => m.id === selected) ?? defaultModule;
   return (
     <article className={`card unit ${open ? 'open' : ''}`}>
       <button className="unit-head" onClick={onToggle} aria-expanded={open}>
@@ -135,8 +142,9 @@ function UnitCard({ unit, outline, open, onToggle }: { unit: Unit; outline: Cour
           <span className="it small">{unit.titleIt}</span>
         </div>
         <div className="unit-side">
-          {percent === 100 ? <span className="badge badge-green"><Icon.Check size={14} /> {t('course.done')}</span> : <span className="badge badge-gray">{unit.completedLessons}/{unit.lessons.length}</span>}
-          <Stars value={Math.round((unit.stars / Math.max(1, unit.lessons.length * 3)) * 3)} />
+          {modules.length > 0 && <span className="badge badge-blue">{t('course.modules', { n: modules.length })}</span>}
+          {percent === 100 ? <span className="badge badge-green"><Icon.Check size={14} /> {t('course.done')}</span> : <span className="badge badge-gray">{unit.completedLessons}/{countable}</span>}
+          <Stars value={Math.round((unit.stars / Math.max(1, countable * 3)) * 3)} />
         </div>
         <Icon.ArrowRight size={20} className="unit-chevron" />
       </button>
@@ -146,11 +154,35 @@ function UnitCard({ unit, outline, open, onToggle }: { unit: Unit; outline: Cour
           <div className="stack" style={{ gap: 12 }}>
             {unit.description && <p className="muted">{unit.description}<Tr text={unit.description} /></p>}
             <ProgressBar value={percent} />
-            <div className="lesson-list">
-              {unit.lessons.map((l) => (
-                <LessonRow key={l.id} lesson={l} isNext={outline.isEnrolled && l.id === outline.nextLessonId} />
-              ))}
-            </div>
+            {modules.length > 0 ? (
+              <>
+                <div className="module-grid" role="list">
+                  {modules.map((m) => (
+                    <ModuleCard key={m.id} module={m} outline={outline} active={current?.id === m.id} onSelect={() => setSelected(m.id)} />
+                  ))}
+                </div>
+                {current && !current.locked && (
+                  <div className="module-lessons">
+                    <div className="module-lessons-head">
+                      <strong>{t('course.module', { n: current.order })} · {current.title}</strong>
+                      <Tr text={current.title} />
+                      <span className="muted small">{t('course.lessonsInModule')}</span>
+                    </div>
+                    <div className="lesson-list">
+                      {current.lessons.map((l) => (
+                        <LessonRow key={l.id} lesson={l} isNext={outline.isEnrolled && l.id === outline.nextLessonId} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="lesson-list">
+                {unit.lessons.map((l) => (
+                  <LessonRow key={l.id} lesson={l} isNext={outline.isEnrolled && l.id === outline.nextLessonId} />
+                ))}
+              </div>
+            )}
           </div>
           <aside className="unit-aside">
             {unit.canDo.length > 0 && (
@@ -176,11 +208,74 @@ function UnitCard({ unit, outline, open, onToggle }: { unit: Unit; outline: Cour
   );
 }
 
+const MODULE_EMOJI = ['🎬', '🗣️', '📖', '✍️', '🎧', '🧩', '🏅'];
+
+function ModuleCard({ module, outline, active, onSelect }: { module: Module; outline: CourseOutline; active: boolean; onSelect: () => void }) {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const locked = !!module.locked;
+  const done = !!module.completed;
+  const percent = module.totalLessons ? Math.round((module.completedLessons / module.totalLessons) * 100) : 0;
+  const isExam = module.isTest || module.lessons.some((l) => l.kind === 'Exam');
+  // Where "Start / Continue" goes: the first open lesson not done yet (skipping videos not recorded yet).
+  const target = module.lessons.find((l) => !l.locked && !l.completed && !l.videoPending)
+    ?? module.lessons.find((l) => !l.locked && !l.videoPending);
+  const status = locked ? 'locked' : done ? 'done' : module.lessons.some((l) => l.id === outline.nextLessonId) ? 'current' : 'open';
+
+  return (
+    <article
+      role="listitem"
+      className={`module-card is-${status} ${active ? 'active' : ''}`}
+      onClick={() => !locked && onSelect()}
+      title={locked ? (outline.isEnrolled ? t('course.moduleLocked') : t('course.moduleJoin')) : undefined}
+    >
+      <div className="module-card-top">
+        <span className="module-art" aria-hidden>
+          {module.imageUrl ? <img src={mediaUrl(module.imageUrl) ?? undefined} alt="" /> : isExam ? '📝' : MODULE_EMOJI[(module.order - 1) % MODULE_EMOJI.length]}
+          {locked && <span className="module-lock"><Icon.Lock size={16} /></span>}
+          {done && <span className="module-tick"><Icon.Check size={14} /></span>}
+        </span>
+        <span className="module-num">{t('course.module', { n: module.order })}</span>
+      </div>
+      <h3>{module.title}</h3>
+      <Tr text={module.title} />
+      {module.description && <p className="module-desc">{module.description}<Tr text={module.description} /></p>}
+      <div className="module-meta">
+        {module.isTest
+          ? <span className="badge badge-blue">📝 {t('course.testModule')}</span>
+          : <span className={`badge ${module.videoReady ? 'badge-blue' : 'badge-gold'}`}>🎬 {module.videoReady ? t('course.videoFirst') : t('course.videoSoon')}</span>}
+      </div>
+      <div className="module-progress">
+        <ProgressBar value={percent} />
+        <span className="muted small">{t('course.lessonsDone', { done: module.completedLessons, total: module.totalLessons })}</span>
+      </div>
+      <div className="module-foot">
+        {locked ? (
+          <span className="module-locked-text"><Icon.Lock size={15} /> {outline.isEnrolled ? t('course.moduleLocked') : t('course.moduleJoin')}</span>
+        ) : (
+          <>
+            {done ? <span className="badge badge-green"><Icon.Check size={14} /> {t('course.moduleDone')}</span> : <Stars value={Math.round((module.stars / Math.max(1, module.totalLessons * 3)) * 3)} />}
+            {target && (
+              <button
+                type="button"
+                className={`btn btn-sm ${done ? '' : 'btn-success'}`}
+                onClick={(e) => { e.stopPropagation(); navigate(`/lesson/${target.id}`); }}
+              >
+                {done ? t('course.moduleReview') : module.completedLessons === 0 ? t('course.moduleStart') : t('course.moduleContinue')} <Icon.ArrowRight size={16} />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
+
 function LessonRow({ lesson, isNext }: { lesson: LessonSummary; isNext: boolean }) {
   const { t } = useI18n();
   const meta = KIND_META[lesson.kind];
   const details = [
-    t(`kinds.${lesson.kind}`),
+    lesson.videoPending ? t('course.videoSoon') : t(`kinds.${lesson.kind}`),
     t('course.min', { n: lesson.estimatedMinutes }),
     lesson.vocabularyCount ? t('course.words', { n: lesson.vocabularyCount }) : null,
     lesson.isFreePreview && lesson.locked === false && !lesson.completed ? t('course.freePreview') : null,
@@ -197,7 +292,7 @@ function LessonRow({ lesson, isNext }: { lesson: LessonSummary; isNext: boolean 
         <span>{details}</span>
       </span>
       <span className="lesson-end">
-        {lesson.completed ? <Stars value={lesson.stars ?? 0} /> : isNext ? <span className="badge badge-green">{t('course.next')}</span> : <span className="badge badge-gray">+{lesson.xpReward} XP</span>}
+        {lesson.videoPending ? <span className="badge badge-gold">🎬 {t('course.videoSoon')}</span> : lesson.completed ? <Stars value={lesson.stars ?? 0} /> : isNext ? <span className="badge badge-green">{t('course.next')}</span> : <span className="badge badge-gray">+{lesson.xpReward} XP</span>}
       </span>
     </>
   );

@@ -88,6 +88,33 @@ function Player({ lesson }: { lesson: Lesson }) {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // The module's video isn't recorded yet: say so and let the student go on.
+  if (lesson.videoPending) {
+    return (
+      <div className="player">
+        <header className="player-top">
+          <button className="icon-btn" onClick={backToCourse} aria-label={t('lesson.close')} title={t('lesson.backToCourse')}><Icon.X size={20} /></button>
+          <div className="player-progress"><ProgressBar value={0} /></div>
+          <span className="player-step">🎬</span>
+        </header>
+        <div className="player-body">
+          <div className="result">
+            <div style={{ fontSize: 72, lineHeight: 1 }} aria-hidden>🎬</div>
+            <span className="muted small">{lesson.moduleTitle}<Tr text={lesson.moduleTitle ?? ''} /></span>
+            <h1>{t('lesson.videoSoonTitle')}</h1>
+            <p className="muted">{t('lesson.videoSoonText')}</p>
+            <div className="row wrap result-actions">
+              {lesson.nextLessonId ? (
+                <button className="btn btn-success btn-lg" onClick={() => navigate(`/lesson/${lesson.nextLessonId}`)}>{t('lesson.continueLessons')} <Icon.ArrowRight size={18} /></button>
+              ) : null}
+              <button className="btn btn-lg" onClick={backToCourse}>{t('lesson.backToCourse')}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="player">
       <header className="player-top">
@@ -213,7 +240,7 @@ function ResultView({ lesson, result, saving, error, total, correct, onRetry, on
   const passed = result.stars > 0;
   const isTest = lesson.kind === 'Exam';
   const passMark = isTest ? 60 : 50;
-  const title = result.courseCompleted ? t('lesson.courseCompleted') : result.unitCompleted ? t('lesson.unitCompleted')
+  const title = result.courseCompleted ? t('lesson.courseCompleted') : result.unitCompleted ? t('lesson.unitCompleted') : result.moduleCompleted ? t('lesson.moduleCompleted')
     : passed ? (isTest ? t('lesson.testPassed') : result.stars === 3 ? 'Perfetto!' : 'Ben fatto!')
     : isTest ? t('lesson.notPassed') : t('lesson.keepPractising');
   return (

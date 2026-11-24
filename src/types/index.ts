@@ -80,6 +80,11 @@ export interface LessonSummary {
   stars?: number | null;
   bestScorePercent?: number | null;
   locked?: boolean | null;
+  moduleId?: string | null;
+  /** The video lesson every module starts with. */
+  isModuleVideo?: boolean;
+  /** Module video not recorded yet: shown as "coming soon", never blocks. */
+  videoPending?: boolean;
 }
 
 export interface Unit {
@@ -96,6 +101,7 @@ export interface Unit {
   lessons: LessonSummary[];
   completedLessons: number;
   stars: number;
+  modules?: Module[];
 }
 
 export interface CourseOutline {
@@ -187,6 +193,10 @@ export interface Lesson {
   stars?: number | null;
   bestScorePercent?: number | null;
   completed?: boolean | null;
+  moduleId?: string | null;
+  moduleTitle?: string | null;
+  isModuleVideo?: boolean;
+  videoPending?: boolean;
 }
 
 export interface LessonResult {
@@ -202,6 +212,7 @@ export interface LessonResult {
   nextLessonId?: string | null;
   unitCompleted: boolean;
   courseCompleted: boolean;
+  moduleCompleted?: boolean;
 }
 
 export interface LearnerSummary {
@@ -253,4 +264,24 @@ export interface AiResponse {
   response: string;
   tokensUsed: number;
   isMocked: boolean;
+}
+
+/** A group of lessons in a unit, shown as a card. Opens when the previous module is complete. */
+export interface Module {
+  id: string;
+  unitId: string;
+  order: number;
+  title: string;
+  titleIt: string;
+  description: string;
+  imageUrl?: string | null;
+  lessons: LessonSummary[];
+  totalLessons: number;
+  completedLessons: number;
+  stars: number;
+  locked?: boolean | null;
+  completed?: boolean | null;
+  videoReady: boolean;
+  /** Test module (chapter test): no video. */
+  isTest?: boolean;
 }
