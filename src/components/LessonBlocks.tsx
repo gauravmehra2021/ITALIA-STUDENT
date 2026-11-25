@@ -5,8 +5,9 @@ import { speak, stopSpeaking } from '../lib/speech';
 import { AudioButton } from './ui';
 import { RoleplayBlock } from './Roleplay';
 import { Icon } from './Icons';
-import { useI18n, useTc } from '../i18n';
-import { Tr } from '../i18n/content';
+import { dirOf, htmlLangOf, useI18n, useTc } from '../i18n';
+import { Tr, useContentTr } from '../i18n/content';
+import { LANGUAGE_NAME, meaningColumns, splitMeaning } from '../lib/meaning';
 import type { DialogueLine, LessonBlock, VocabularyItem } from '../types';
 
 export function LessonBlockView({ block }: { block: LessonBlock }) {
@@ -127,10 +128,10 @@ function VocabularyBlock({ block }: { block: LessonBlock }) {
   );
 }
 
-/** Shows the Punjabi written in the lesson to English and Punjabi learners. */
-const showsLessonPunjabi = (lang: string) => lang === 'en' || lang === 'pa';
+/** The Punjabi written in the lesson is shown only to students who chose Punjabi. */
+const showsLessonPunjabi = (lang: string) => lang === 'pa';
 
-/** The Punjabi written on the word (English and Punjabi learners), or the translation memory (Hindi, Urdu). */
+/** The Punjabi written on the word (Punjabi learners), or the translation (Hindi, Urdu); nothing in English. */
 function Meaning({ item, cls }: { item: VocabularyItem; cls: string }) {
   const { lang } = useI18n();
   if (item.punjabi && showsLessonPunjabi(lang)) return <span className={cls} lang="pa-Latn"><abbr title="Punjabi">PA</abbr> {item.punjabi}</span>;
@@ -250,20 +251,55 @@ function DialogueBubble({ line, right, active, showEnglish }: { line: DialogueLi
   );
 }
 
+/** The translation of an English meaning in the student's language (Hindi / Urdu table cells). */
+function TranslatedCell({ text }: { text: string | undefined }) {
+  const { lang } = useI18n();
+  const value = useContentTr(text);
+  return <span lang={htmlLangOf(lang)} dir={dirOf(lang)}>{value ?? ''}</span>;
+}
+
+/**
+ * Grammar table. A Punjabi meaning column is shown in the student's language: Punjabi as written,
+ * Hindi / Urdu as the translation of the English meaning, and not at all in English.
+ */
 function TableBlock({ block }: { block: LessonBlock }) {
   const tc = useTc();
+  const { lang } = useI18n();
   const [head, ...rows] = block.table;
   if (!head) return null;
+  const { english, punjabi, mixed } = meaningColumns(head);
+  const separate = english >= 0 && punjabi >= 0;
+  const translated = lang === 'hi' || lang === 'ur';
+  // A Punjabi column without English (older content) only means something to Punjabi learners.
+  const hidden = (j: number) => j === punjabi && lang !== 'pa' && (!separate || lang === 'en');
+  const columns = head.map((_, j) => j).filter((j) => !hidden(j));
+
+  const header = (h: string, j: number) => {
+    if (separate && j === punjabi && translated) return LANGUAGE_NAME[lang];
+    if (j === mixed) return lang === 'pa' ? h : translated ? `English · ${LANGUAGE_NAME[lang]}` : 'English';
+    return <>{h}<Tr text={h} className="tr-th" /></>;
+  };
+  const cell = (row: string[], j: number) => {
+    const c = row[j] ?? '';
+    if (separate && j === punjabi && translated) return <TranslatedCell text={row[english]} />;
+    if (j === mixed) {
+      const [en] = splitMeaning(c);
+      if (lang === 'pa') return c;
+      return <>{en}<Tr text={en} block /></>;
+    }
+    return c;
+  };
+
   return (
     <section className="lb">
       {block.title && <h3>{tc(block.title)}</h3>}
       {block.title && tc(block.title) === block.title && <Tr text={block.title} />}
       <div className="table-wrap">
         <table className="g-table">
-          <thead><tr>{head.map((h, i) => <th key={i}>{h}<Tr text={h} className="tr-th" /></th>)}</tr></thead>
+          <thead><tr>{columns.map((j) => <th key={j}>{header(head[j], j)}</th>)}</tr></thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i}>{r.map((c, j) => <td key={j} className={j === 1 ? 'em' : ''}>{c}</td>)}</tr>
+              <tr key={i}>{columns.map((j) => <td key={j} className={j === 1 ? 'em' : ''}>{cell(r, j)}</td>)}</tr>
             ))}
           </tbody>
         </table>

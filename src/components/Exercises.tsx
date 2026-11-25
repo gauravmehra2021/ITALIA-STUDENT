@@ -5,6 +5,7 @@ import { AudioButton } from './ui';
 import { Icon } from './Icons';
 import { useI18n, useTc } from '../i18n';
 import { Tr } from '../i18n/content';
+import { splitMeaning } from '../lib/meaning';
 import type { Exercise } from '../types';
 
 /** Called once per exercise: whether it was answered correctly on the first try. */
@@ -211,8 +212,9 @@ function MatchPairs({ exercise, onAnswered }: { exercise: Exercise; onAnswered: 
               disabled={rightMatched(r)}
               onClick={() => setSelRight(r)}
             >
-              {r}
-              {!r.includes(' · ') && <Tr text={r} />}
+              {/* "Thank you · Dhanvad": the English, then the meaning in the student's language. */}
+              {splitMeaning(r)[0]}
+              <Tr text={splitMeaning(r)[0]} />
             </button>
           ))}
         </div>
