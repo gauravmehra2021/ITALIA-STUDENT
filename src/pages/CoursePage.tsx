@@ -6,6 +6,7 @@ import { learnApi } from '../services/api';
 import { mediaUrl } from '../lib/media';
 import { ErrorState, Illustration, KIND_META, Loading, ProgressBar, ProgressRing, Stars } from '../components/ui';
 import { Icon } from '../components/Icons';
+import { PdfViewer } from '../components/PdfViewer';
 import { useI18n } from '../i18n';
 import { Tr } from '../i18n/content';
 import type { CourseOutline, LessonSummary, Module, Unit } from '../types';
@@ -124,7 +125,7 @@ function UnitCard({ unit, outline, open, onToggle }: { unit: Unit; outline: Cour
   const { t } = useI18n();
   const countable = unit.lessons.filter((l) => !l.videoPending).length;
   const percent = countable ? Math.round((unit.completedLessons / countable) * 100) : 0;
-  const pdf = mediaUrl(unit.pdfUrl);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const modules = unit.modules ?? [];
   // The module shown under the cards: the one with the next lesson, else the first open one.
   const defaultModule = modules.find((m) => m.lessons.some((l) => l.id === outline.nextLessonId))
@@ -198,9 +199,10 @@ function UnitCard({ unit, outline, open, onToggle }: { unit: Unit; outline: Cour
                 <Link to="/live-classes" className="small">{t('course.seeSchedule')}</Link>
               </div>
             )}
-            {pdf && outline.isEnrolled && (
-              <a className="btn btn-block" href={pdf} target="_blank" rel="noreferrer"><Icon.Download size={18} /> {t('course.studySheet')}</a>
+            {unit.pdfUrl && outline.isEnrolled && (
+              <button type="button" className="btn btn-block" onClick={() => setSheetOpen(true)}><Icon.File size={18} /> {t('course.studySheet')}</button>
             )}
+            {sheetOpen && unit.pdfUrl && <PdfViewer url={unit.pdfUrl} title={t('course.studySheet')} onClose={() => setSheetOpen(false)} />}
           </aside>
         </div>
       )}

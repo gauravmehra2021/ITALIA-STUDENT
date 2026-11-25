@@ -1,0 +1,34 @@
+/* In-app PDF viewer: pages as pictures, nothing to select, drag, save or print. */
+.pdfv {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: #1f2937;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.pdfv-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #0b3d91;
+  color: #fff;
+}
+.pdfv-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pdfv-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pdfv-title span { font-size: 0.8rem; opacity: 0.8; }
+.pdfv-body { flex: 1; overflow: auto; padding: 20px 12px 40px; }
+.pdfv-pages { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.pdfv-page { max-width: 100%; height: auto; background: #fff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35); pointer-events: none; }
+.pdfv-msg { color: #e5e7eb; text-align: center; margin-top: 40px; }
+
+body.pdf-open { overflow: hidden; }
+
+/* Printing while a document is open prints nothing. */
+@media print {
+  body.pdf-open * { visibility: hidden !important; }
+}

@@ -159,6 +159,8 @@ export const learnApi = {
   course: (id: string) => request<CourseOutline>(`/api/learn/courses/${id}`),
   enroll: (id: string) => post<CourseOutline>(`/api/learn/courses/${id}/enroll`),
   lesson: (id: string) => request<Lesson>(`/api/learn/lessons/${id}`),
+  /** A link to a syllabus PDF that works for a few minutes (only for students who may see its course). */
+  documentLink: (url: string) => post<{ url: string; expiresAtUtc: string }>('/api/documents/link', { url }),
   complete: (id: string, scorePercent: number, correctAnswers: number, totalQuestions: number) =>
     post<LessonResult>(`/api/learn/lessons/${id}/complete`, { scorePercent, correctAnswers, totalQuestions }),
 };

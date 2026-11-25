@@ -4,6 +4,7 @@ import { embedUrl, mediaUrl } from '../lib/media';
 import { speak, stopSpeaking } from '../lib/speech';
 import { AudioButton } from './ui';
 import { RoleplayBlock } from './Roleplay';
+import { PdfViewer } from './PdfViewer';
 import { Icon } from './Icons';
 import { dirOf, htmlLangOf, useI18n, useTc } from '../i18n';
 import { Tr, useContentTr } from '../i18n/content';
@@ -52,17 +53,7 @@ export function LessonBlockView({ block }: { block: LessonBlock }) {
         </figure>
       );
     case 'Pdf':
-      return (
-        <a className="lb lb-pdf card card-hover" href={mediaUrl(block.mediaUrl) ?? '#'} target="_blank" rel="noreferrer">
-          <span className="lb-pdf-icon"><Icon.File size={26} /></span>
-          <span style={{ flex: 1 }}>
-            <strong>{tc(block.title) || t('blocks.downloadPdf')}</strong>
-            {tc(block.title) === block.title && <Tr text={block.title} />}
-            {block.body && <span className="muted small" style={{ display: 'block' }}>{tc(block.body)}</span>}
-          </span>
-          <Icon.Download size={20} />
-        </a>
-      );
+      return <PdfBlock block={block} />;
     default:
       return <TextBlock block={block} />;
   }
@@ -97,6 +88,29 @@ function TextBlock({ block }: { block: LessonBlock }) {
         </>
       )}
     </section>
+  );
+}
+
+/** A syllabus PDF: opens in the in-app viewer (no download). */
+function PdfBlock({ block }: { block: LessonBlock }) {
+  const { t } = useI18n();
+  const tc = useTc();
+  const [open, setOpen] = useState(false);
+  if (!block.mediaUrl) return null;
+  const title = tc(block.title) || t('blocks.openPdf');
+  return (
+    <>
+      <button type="button" className="lb lb-pdf card card-hover" onClick={() => setOpen(true)}>
+        <span className="lb-pdf-icon"><Icon.File size={26} /></span>
+        <span style={{ flex: 1, textAlign: 'start' }}>
+          <strong>{title}</strong>
+          {tc(block.title) === block.title && <Tr text={block.title} />}
+          {block.body && <span className="muted small" style={{ display: 'block' }}>{tc(block.body)}</span>}
+        </span>
+        <span className="small" style={{ fontWeight: 600 }}>{t('blocks.openPdf')}</span>
+      </button>
+      {open && <PdfViewer url={block.mediaUrl} title={title} onClose={() => setOpen(false)} />}
+    </>
   );
 }
 
