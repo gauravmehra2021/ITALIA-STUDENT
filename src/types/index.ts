@@ -239,6 +239,8 @@ export interface ClassSession {
   status: string;
   meetingUrl?: string | null;
   meetingProvider?: string | null;
+  /** The batch this class is for. */
+  batchName?: string | null;
 }
 
 export interface NotificationItem {

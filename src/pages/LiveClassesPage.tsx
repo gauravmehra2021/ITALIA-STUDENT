@@ -12,7 +12,8 @@ export function LiveClassesPage() {
   const { data, error, loading, reload } = useAsync(async () => {
     const [classes, courses] = await Promise.all([classesApi.list(), learnApi.courses()]);
     const enrolled = new Set(courses.filter((c) => c.isEnrolled).map((c) => c.course.id));
-    return { classes: classes.filter((c) => enrolled.has(c.courseId)), hasCourses: enrolled.size > 0 };
+    // The server already sends only this student's classes (their batches).
+    return { classes, hasCourses: enrolled.size > 0 || classes.length > 0 };
   });
 
   if (loading && !data) return <Loading label={t('live.loading')} />;
@@ -89,7 +90,7 @@ function ClassRow({ session, past = false }: { session: ClassSession; past?: boo
       </div>
       <div className="class-info">
         <strong>{session.title}</strong>
-        <span className="muted small">{session.courseTitle} · {session.mentorName}</span>
+        <span className="muted small">{[session.batchName, session.courseTitle, session.mentorName].filter(Boolean).join(" · ")}</span>
         <span className="small" style={{ fontWeight: 700, color: 'var(--ink-2)' }}>
           {start.toLocaleDateString(locale, { weekday: 'long' })}, {start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })} · {session.durationMinutes} min
           {session.meetingProvider ? ` · ${session.meetingProvider}` : ''}

@@ -42,9 +42,8 @@ export function HomePage() {
   if (error || !data) return <ErrorState message={error ?? t('home.loadError')} onRetry={reload} />;
 
   const { summary, classes, notes, available } = data;
-  const enrolledIds = new Set(summary.myCourses.map((c) => c.course.id));
   const nextClass = classes
-    .filter((c) => enrolledIds.has(c.courseId) && new Date(c.scheduledAtUtc).getTime() > Date.now() - c.durationMinutes * 60000 && c.status !== 'Cancelled')
+    .filter((c) => new Date(c.scheduledAtUtc).getTime() > Date.now() - c.durationMinutes * 60000 && c.status !== 'Cancelled')
     .sort((a, b) => +new Date(a.scheduledAtUtc) - +new Date(b.scheduledAtUtc))[0];
 
   return (
@@ -223,7 +222,7 @@ function NextClassCard({ session }: { session?: ClassSession }) {
       <div className="row"><span className="next-class-icon"><Icon.Video size={20} /></span><strong>{t('home.nextClass')}</strong>{live && <span className="badge badge-red">{t('home.liveSoon')}</span>}</div>
       <div>
         <strong style={{ fontSize: '1.05rem' }}>{session.title}</strong>
-        <p className="muted small">{session.courseTitle} · {t('home.withTeacher', { name: session.mentorName ?? '' })}</p>
+        <p className="muted small">{[session.batchName, session.courseTitle].filter(Boolean).join(' · ')}{session.batchName || session.courseTitle ? ' · ' : ''}{t('home.withTeacher', { name: session.mentorName ?? '' })}</p>
       </div>
       <div className="row next-class-time">
         <Icon.Calendar size={18} />
