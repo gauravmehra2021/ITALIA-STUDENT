@@ -13,6 +13,7 @@ import { LiveClassesPage } from './pages/LiveClassesPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { TutorPage } from './pages/TutorPage';
+import { AI_TUTOR_ENABLED } from './lib/features';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 
 function Protected({ children }: { children: ReactNode }) {
@@ -45,7 +46,7 @@ export function App() {
             <Route path="/live-classes" element={<LiveClassesPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/tutor" element={<TutorPage />} />
+            <Route path="/tutor" element={AI_TUTOR_ENABLED ? <TutorPage /> : <Navigate to="/" replace />} />
             {/* Old links */}
             <Route path="/my-classes" element={<Navigate to="/" replace />} />
             <Route path="/dashboard" element={<Navigate to="/" replace />} />

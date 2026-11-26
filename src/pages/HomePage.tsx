@@ -5,6 +5,7 @@ import { announcementsApi, classesApi, learnApi } from '../services/api';
 import { ErrorState, Illustration, Loading, ProgressBar, ProgressRing } from '../components/ui';
 import { Icon } from '../components/Icons';
 import { useI18n } from '../i18n';
+import { AI_TUTOR_ENABLED } from '../lib/features';
 import { LanguageCard } from '../i18n/LanguagePicker';
 import { Tr } from '../i18n/content';
 import type { Announcement, ClassSession, LearnerSummary } from '../types';
@@ -118,6 +119,7 @@ export function HomePage() {
 
           <NextClassCard session={nextClass} />
 
+          {AI_TUTOR_ENABLED && (
           <Link to="/tutor" className="card card-pad card-hover tutor-card">
             <img src="/images/ui/chikoo-card.png" alt="" width={64} height={64} />
             <div>
@@ -126,6 +128,7 @@ export function HomePage() {
             </div>
             <Icon.ArrowRight size={18} />
           </Link>
+          )}
 
           <section className="card card-pad">
             <div className="section-title"><h2>📢 {t('home.news')}</h2></div>

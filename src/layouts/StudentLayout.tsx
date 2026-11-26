@@ -3,12 +3,13 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LearnerProvider, useLearner } from '../hooks/useLearner';
 import { useI18n } from '../i18n';
+import { AI_TUTOR_ENABLED } from '../lib/features';
 import { LanguageSelect } from '../i18n/LanguagePicker';
 import { Icon } from '../components/Icons';
 import { Logo } from '../components/ui';
 import './layout.css';
 
-const NAV = [
+const ALL_NAV = [
   { to: '/', key: 'nav.home', short: 'nav.home', icon: Icon.Home, end: true },
   { to: '/courses', key: 'nav.courses', short: 'nav.courses', icon: Icon.Book },
   { to: '/live-classes', key: 'nav.live', short: 'nav.liveShort', icon: Icon.Video },
@@ -16,6 +17,9 @@ const NAV = [
   { to: '/tutor', key: 'nav.tutor', short: 'nav.tutor', icon: Icon.Sparkles },
   { to: '/notifications', key: 'nav.notifications', short: 'nav.notificationsShort', icon: Icon.Bell },
 ];
+
+// The AI Tutor is left out while it is switched off (see lib/features).
+const NAV = ALL_NAV.filter((n) => AI_TUTOR_ENABLED || n.to !== '/tutor');
 
 const MOBILE_NAV = NAV.filter((n) => n.to !== '/tutor');
 
@@ -124,7 +128,7 @@ function Shell() {
                   <span>{user?.email}</span>
                 </div>
                 <LanguageSelect className="in-menu" />
-                <NavLink to="/tutor" className="user-menu-item" role="menuitem"><Icon.Sparkles size={18} /> {t('nav.tutor')}</NavLink>
+                {AI_TUTOR_ENABLED && <NavLink to="/tutor" className="user-menu-item" role="menuitem"><Icon.Sparkles size={18} /> {t('nav.tutor')}</NavLink>}
                 <NavLink to="/progress" className="user-menu-item" role="menuitem"><Icon.Chart size={18} /> {t('nav.myProgress')}</NavLink>
                 <button className="user-menu-item danger" role="menuitem" onClick={onLogout}><Icon.Logout size={18} /> {t('nav.signOut')}</button>
               </div>
